@@ -65,7 +65,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="subheader">Dalam Proses</div>
-                        <div class="h1 mt-1 mb-0">{{ $perStatus->get('in_progress', 0) + $perStatus->get('assigned', 0) + $perStatus->get('forwarded_to_leadership', 0) }}</div>
+                        <div class="h1 mt-1 mb-0">{{ $perStatus->get('in_progress', 0) + $perStatus->get('assigned', 0) + $perStatus->get('forwarded_to_leadership', 0) + $perStatus->get('verified', 0) + $perStatus->get('handled_by_leadership', 0) }}</div>
                     </div>
                     <div class="stat-icon bg-info-subtle">
                         <i class="ti ti-clock-play fs-2"></i>
@@ -122,6 +122,7 @@
             <thead>
                 <tr>
                     <th>No. Agenda / Pengirim</th>
+                    <th>Organisasi Pengirim</th>
                     <th>Perihal</th>
                     <th>Tgl Diterima</th>
                     <th>Status</th>

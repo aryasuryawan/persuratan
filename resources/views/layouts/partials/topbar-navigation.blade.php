@@ -79,6 +79,7 @@
         <div class="dropdown-menu">
             <a class="dropdown-item" href="{{ route('master.direktorats.index') }}">Direktorat</a>
             <a class="dropdown-item" href="{{ route('master.strukturs.index') }}">Struktur</a>
+            <a class="dropdown-item" href="{{ route('master.organisasi-pengirims.index') }}">Organisasi Pengirim</a>
             <a class="dropdown-item" href="{{ route('master.divisis.index') }}">Divisi</a>
             <a class="dropdown-item" href="{{ route('master.departemens.index') }}">Departemen</a>
             <div class="dropdown-divider"></div>

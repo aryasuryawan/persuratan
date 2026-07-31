@@ -30,7 +30,7 @@ class SettingController extends Controller
             'footer_links.*.label' => 'nullable|string|max:100',
             'footer_links.*.url' => 'nullable|url|max:255',
             'app_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
-            'app_favicon' => 'nullable|image|mimes:png,ico,webp|max:512',
+            'app_favicon' => 'nullable|file|mimes:png,ico,webp|max:512',
         ];
 
         $data = $request->validate($rules);
@@ -38,12 +38,23 @@ class SettingController extends Controller
         foreach ($data as $key => $value) {
             if (in_array($key, ['app_logo', 'app_favicon'])) {
                 if ($request->hasFile($key)) {
+                    $file = $request->file($key);
+                    if (!$file->isValid() || $file->getSize() <= 0) {
+                        return redirect()->route('master.settings.index')
+                            ->with('error', 'File tidak valid atau kosong. Silakan pilih file lain.');
+                    }
                     $old = Setting::get($key);
                     if ($old) {
                         Storage::disk('public')->delete($old);
                     }
-                    $path = $request->file($key)->store('settings', 'public');
-                    Setting::set($key, $path);
+                    $ext = $file->getClientOriginalExtension() ?: 'png';
+                    $filename = $key . '_' . date('Ymd_His') . '.' . $ext;
+                    $destDir = storage_path('app/public/settings');
+                    if (!is_dir($destDir)) {
+                        mkdir($destDir, 0755, true);
+                    }
+                    $file->move($destDir, $filename);
+                    Setting::set($key, 'settings/' . $filename);
                 }
                 continue;
             }

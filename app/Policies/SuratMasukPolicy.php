@@ -12,6 +12,15 @@ class SuratMasukPolicy
         return in_array($user->role->kode, ['sekretaris', 'admin', 'cc_security', 'unit_lain']);
     }
 
+    public function update(User $user, SuratMasuk $suratMasuk): bool
+    {
+        if (in_array($user->role->kode, ['sekretaris', 'admin'])) {
+            return true;
+        }
+
+        return $user->id === $suratMasuk->created_by;
+    }
+
     public function view(User $user, SuratMasuk $suratMasuk): bool
     {
         if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {

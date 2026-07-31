@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Disposisi extends Model
@@ -11,7 +12,7 @@ class Disposisi extends Model
     protected $table = 'disposisi';
 
     protected $fillable = [
-        'uuid', 'surat_masuk_id', 'dari_user_id', 'kepada_user_id',
+        'uuid', 'surat_masuk_id', 'disposisi_induk_id', 'dari_user_id', 'kepada_user_id',
         'jenis', 'atas_nama_pimpinan_id', 'catatan', 'catatan_pimpinan',
         'tanggal_deadline', 'completed_at',
     ];
@@ -61,5 +62,15 @@ class Disposisi extends Model
     public function followUps(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DisposisiFollowUp::class);
+    }
+
+    public function disposisiInduk(): BelongsTo
+    {
+        return $this->belongsTo(Disposisi::class, 'disposisi_induk_id');
+    }
+
+    public function disposisiAnak(): HasMany
+    {
+        return $this->hasMany(Disposisi::class, 'disposisi_induk_id');
     }
 }

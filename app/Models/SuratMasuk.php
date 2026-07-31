@@ -15,7 +15,7 @@ class SuratMasuk extends Model
     protected $table = 'surat_masuk';
 
     protected $fillable = [
-        'uuid', 'nomor_agenda', 'nomor_surat', 'pengirim', 'perihal',
+        'uuid', 'nomor_agenda', 'nomor_surat', 'pengirim', 'pengirim_id', 'perihal',
         'tanggal_surat', 'tanggal_diterima', 'lampiran', 'klasifikasi_id',
         'status_id', 'is_rahasia', 'lampiran_path', 'created_by',
         'verified_by', 'verified_at', 'completed_at', 'notes',
@@ -47,6 +47,11 @@ class SuratMasuk extends Model
         return $this->belongsTo(Klasifikasi::class);
     }
 
+    public function organisasiPengirim(): BelongsTo
+    {
+        return $this->belongsTo(OrganisasiPengirim::class, 'pengirim_id');
+    }
+
     public function status(): BelongsTo
     {
         return $this->belongsTo(StatusSurat::class, 'status_id');
@@ -70,5 +75,10 @@ class SuratMasuk extends Model
     public function riwayatStatus(): HasMany
     {
         return $this->hasMany(RiwayatStatus::class);
+    }
+
+    public function riwayatPerubahanData(): HasMany
+    {
+        return $this->hasMany(RiwayatPerubahanData::class);
     }
 }

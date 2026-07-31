@@ -28,7 +28,7 @@ class SuratScopeService
 
     public function listSuratMasuk(User $user, array $filters = [])
     {
-        $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat']);
+        $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'organisasiPengirim']);
 
         $query = $this->scopeForUser($query, $user);
 

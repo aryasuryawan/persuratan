@@ -7,7 +7,7 @@
     <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme')||'light')</script>
     <title>{{ \App\Models\Setting::get('app_name', 'SiMPEL') }} — @yield('title', 'Manajemen Surat')</title>
     @if(\App\Models\Setting::get('app_favicon'))
-    <link rel="icon" href="{{ \Storage::disk('public')->url(\App\Models\Setting::get('app_favicon')) }}" type="image/png">
+    <link rel="icon" href="{{ \Storage::disk('public')->url(\App\Models\Setting::get('app_favicon')) }}" type="{{ Str::endsWith(\App\Models\Setting::get('app_favicon'), '.ico') ? 'image/x-icon' : 'image/png' }}">
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

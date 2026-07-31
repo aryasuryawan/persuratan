@@ -34,7 +34,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Logo Aplikasi</label>
-                        <input type="file" name="app_logo" class="form-control @error('app_logo') is-invalid @enderror" accept="image/svg+xml,image/webp">
+                        <input type="file" name="app_logo" class="form-control @error('app_logo') is-invalid @enderror" accept="image/jpg,image/jpeg,image/png,image/svg+xml,image/webp">
                         @error('app_logo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         @if(isset($settings['app_logo']) && $settings['app_logo']->value)
                         <div class="mt-2">
@@ -46,7 +46,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Favicon</label>
-                        <input type="file" name="app_favicon" class="form-control @error('app_favicon') is-invalid @enderror" accept="image/png,image/x-icon,image/webp">
+                        <input type="file" name="app_favicon" class="form-control @error('app_favicon') is-invalid @enderror" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/webp">
                         @error('app_favicon') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         @if(isset($settings['app_favicon']) && $settings['app_favicon']->value)
                         <div class="mt-2">

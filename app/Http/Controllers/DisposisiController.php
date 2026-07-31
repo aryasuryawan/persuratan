@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\BuatDisposisi;
+use App\Models\Disposisi;
+use App\Models\RiwayatPerubahanData;
+use App\Models\RiwayatStatus;
 use App\Models\SuratMasuk;
 use App\Models\User;
 use App\Services\SuratScopeService;
@@ -78,5 +81,137 @@ class DisposisiController extends Controller
             ->get(['id', 'name']);
 
         return response()->json($users);
+    }
+
+    public function pindah(Request $request, Disposisi $disposisi)
+    {
+        $user = Auth::user();
+
+        $isSekretarisAdmin = in_array($user->role->kode, ['sekretaris', 'admin']);
+        $isPenerima = $disposisi->kepada_user_id === $user->id;
+
+        if (!$isSekretarisAdmin && !$isPenerima) {
+            abort(403, 'Anda tidak berhak memindahkan disposisi ini.');
+        }
+
+        $data = $request->validate([
+            'pelaksana_id' => 'required|exists:users,id',
+            'catatan' => 'nullable|string',
+            'tanggal_deadline' => 'nullable|date',
+        ]);
+
+        if ((int) $data['pelaksana_id'] === (int) $disposisi->kepada_user_id) {
+            return back()->with('error', 'Pelaksana baru sama dengan penerima disposisi saat ini.');
+        }
+
+        $surat = $disposisi->suratMasuk;
+
+        $baru = Disposisi::create([
+            'surat_masuk_id' => $surat->id,
+            'disposisi_induk_id' => $disposisi->id,
+            'dari_user_id' => $user->id,
+            'kepada_user_id' => $data['pelaksana_id'],
+            'jenis' => 'ke_pelaksana',
+            'catatan' => $data['catatan'] ?? null,
+            'tanggal_deadline' => $data['tanggal_deadline'] ?? null,
+        ]);
+
+        $kepadaNama = $baru->kepadaUser->name ?? '-';
+        $dariNama = $disposisi->kepadaUser->name ?? 'Pimpinan';
+        $catatanPindah = 'Disposisi dipindahkan dari ' . $dariNama . ' ke ' . $kepadaNama;
+
+        if ($baru->followUps()->exists()) {
+            RiwayatStatus::create([
+                'surat_masuk_id' => $surat->id,
+                'status_dari_id' => $surat->status_id,
+                'status_ke_id' => $surat->status_id,
+                'dilakukan_oleh_id' => $user->id,
+                'catatan' => $catatanPindah,
+                'disposisi_id' => $baru->id,
+            ]);
+        } else {
+            $oldStatusId = $surat->status_id;
+            $surat->update([
+                'status_id' => statusId('assigned'),
+                'completed_at' => null,
+            ]);
+
+            RiwayatStatus::create([
+                'surat_masuk_id' => $surat->id,
+                'status_dari_id' => $oldStatusId,
+                'status_ke_id' => statusId('assigned'),
+                'dilakukan_oleh_id' => $user->id,
+                'catatan' => $catatanPindah,
+                'disposisi_id' => $baru->id,
+            ]);
+        }
+
+        return back()->with('success', 'Disposisi berhasil dipindahkan ke ' . $kepadaNama . '.');
+    }
+
+    public function update(Request $request, Disposisi $disposisi)
+    {
+        $user = Auth::user();
+
+        $isSekretarisAdmin = in_array($user->role->kode, ['sekretaris', 'admin']);
+        $isDari = $disposisi->dari_user_id === $user->id;
+
+        if (!$isSekretarisAdmin && !$isDari) {
+            abort(403, 'Anda tidak berhak mengubah disposisi ini.');
+        }
+
+        $data = $request->validate([
+            'catatan' => 'nullable|string',
+            'catatan_pimpinan' => 'nullable|string',
+            'tanggal_deadline' => 'nullable|date',
+        ]);
+
+        $old = $disposisi->getAttributes();
+        $disposisi->update($data);
+
+        $labels = [
+            'catatan' => 'Isi Disposisi',
+            'catatan_pimpinan' => 'Catatan Pimpinan',
+            'tanggal_deadline' => 'Batas Waktu',
+        ];
+
+        $perubahan = [];
+        foreach ($labels as $field => $label) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+            $modelVal = $old[$field] ?? null;
+            $newVal = $data[$field];
+
+            if ($field === 'tanggal_deadline') {
+                $lama = $modelVal ? \Carbon\Carbon::parse($modelVal)->format('d/m/Y') : '-';
+                $baru = $newVal ? \Carbon\Carbon::parse($newVal)->format('d/m/Y') : '-';
+            } else {
+                $lama = $modelVal ?? '-';
+                $baru = $newVal ?? '-';
+            }
+
+            if ((string) $lama === (string) $baru) {
+                continue;
+            }
+
+            $perubahan[$field] = [
+                'label' => $label,
+                'lama' => $lama,
+                'baru' => $baru,
+            ];
+        }
+
+        if (!empty($perubahan)) {
+            RiwayatPerubahanData::create([
+                'surat_masuk_id' => $disposisi->surat_masuk_id,
+                'disposisi_id' => $disposisi->id,
+                'dilakukan_oleh_id' => $user->id,
+                'perubahan' => $perubahan,
+                'catatan' => 'Disposisi diperbarui.',
+            ]);
+        }
+
+        return back()->with('success', 'Disposisi berhasil diperbarui.');
     }
 }

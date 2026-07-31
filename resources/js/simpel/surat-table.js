@@ -52,7 +52,7 @@ class SuratTable {
         if (!data.data || data.data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         <div class="empty">
                             <div class="empty-icon">
                                 <i class="ti ti-inbox"></i>
@@ -72,6 +72,9 @@ class SuratTable {
                                 <div class="text-secondary small">${s.pengirim}</div>
                             </div>
                         </div>
+                    </td>
+                    <td>
+                        <div class="text-secondary">${s.organisasi_pengirim || '-'}</div>
                     </td>
                     <td>
                         <div class="text-truncate" style="max-width: 220px;">${s.perihal}</div>

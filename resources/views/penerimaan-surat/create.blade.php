@@ -13,7 +13,13 @@
 
             <div class="mb-3">
                 <label class="form-label required">Pengirim</label>
-                <input type="text" name="pengirim" class="form-control @error('pengirim') is-invalid @enderror" value="{{ old('pengirim') }}" required>
+                <input type="text" name="pengirim" list="daftar-pengirim" class="form-control @error('pengirim') is-invalid @enderror" value="{{ old('pengirim') }}" required>
+                <datalist id="daftar-pengirim">
+                    @foreach($organisasiList as $o)
+                    <option value="{{ $o->nama }}"></option>
+                    @endforeach
+                </datalist>
+                <small class="form-hint">Pilih dari daftar, atau ketik nama baru untuk otomatis menambah master data.</small>
                 @error('pengirim') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 

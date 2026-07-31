@@ -8,6 +8,7 @@ use App\Http\Controllers\Master\DivisiController;
 use App\Http\Controllers\Master\DirektoratController;
 use App\Http\Controllers\Master\KlasifikasiController;
 use App\Http\Controllers\Master\KodeSuratController;
+use App\Http\Controllers\Master\OrganisasiPengirimController;
 use App\Http\Controllers\Master\RoleController;
 use App\Http\Controllers\Master\SettingController;
 use App\Http\Controllers\Master\SekretarisPimpinanController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [PenerimaanSuratController::class, 'index'])->name('index');
         Route::get('/create', [PenerimaanSuratController::class, 'create'])->name('create');
         Route::post('/', [PenerimaanSuratController::class, 'store'])->name('store');
+        Route::get('/{uuid}/edit', [PenerimaanSuratController::class, 'edit'])->name('edit');
+        Route::put('/{uuid}', [PenerimaanSuratController::class, 'update'])->name('update');
         Route::get('/{uuid}/cetak-disposisi', [PenerimaanSuratController::class, 'cetakDisposisi'])->name('cetak-disposisi');
         Route::get('/{uuid}', [PenerimaanSuratController::class, 'show'])->name('show');
     });
@@ -46,7 +49,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [DisposisiController::class, 'index'])->name('index');
         Route::post('/', [DisposisiController::class, 'store'])->name('store');
         Route::get('/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('pelaksana-options');
+        Route::put('/{disposisi}', [DisposisiController::class, 'update'])->name('update');
         Route::post('/{disposisi}/follow-up', [DisposisiFollowUpController::class, 'store'])->name('follow-up.store');
+        Route::put('/{disposisi}/follow-up/{followUp}', [DisposisiFollowUpController::class, 'update'])->name('follow-up.update');
+        Route::post('/{disposisi}/pindah', [DisposisiController::class, 'pindah'])->name('pindah');
     });
 
     Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
@@ -66,6 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('master')->name('master.')->group(function () {
         Route::resource('direktorats', DirektoratController::class);
         Route::resource('strukturs', StrukturController::class);
+        Route::resource('organisasi-pengirims', OrganisasiPengirimController::class);
         Route::resource('divisis', DivisiController::class);
         Route::resource('departemens', DepartemenController::class);
         Route::resource('roles', RoleController::class);
