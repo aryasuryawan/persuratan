@@ -1,0 +1,77 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@tabler/core/dist/css/tabler.min.css";
+@import "@tabler/core/dist/css/tabler-flags.min.css";
+@import "@tabler/icons-webfont/dist/tabler-icons.min.css";
+
+:root {
+    --tblr-primary: #099a97;
+    --tblr-primary-rgb: 9, 154, 151;
+    --tblr-font-sans-serif: 'Inter', sans-serif;
+}
+
+.badge-received         { background-color: var(--tblr-secondary); }
+.badge-verified         { background-color: var(--tblr-info); }
+.badge-forwarded        { background-color: var(--tblr-warning); color: #000; }
+.badge-assigned         { background-color: var(--tblr-primary); }
+.badge-in-progress      { background-color: var(--tblr-azure); }
+.badge-completed        { background-color: var(--tblr-success); }
+.badge-archived         { background-color: var(--tblr-muted); }
+
+.page-pretitle {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--tblr-muted);
+    margin-bottom: 0.125rem;
+}
+
+.stat-card {
+    border-left: 3px solid var(--tblr-border-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card.stat-primary { border-left-color: var(--tblr-primary); }
+.stat-card.stat-warning { border-left-color: var(--tblr-warning); }
+.stat-card.stat-info    { border-left-color: var(--tblr-azure); }
+.stat-card.stat-success { border-left-color: var(--tblr-success); }
+
+.stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.bg-primary-subtle { background: rgba(9, 154, 151, 0.12); color: var(--tblr-primary); }
+.stat-icon.bg-warning-subtle { background: rgba(255, 193, 7, 0.12); color: #d48b00; }
+.stat-icon.bg-info-subtle    { background: rgba(45, 181, 228, 0.12); color: var(--tblr-azure); }
+.stat-icon.bg-success-subtle { background: rgba(40, 167, 69, 0.12); color: var(--tblr-success); }
+
+.action-card .btn {
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+.table-card .table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--tblr-muted);
+    border-bottom-width: 1px;
+}
+
+[data-bs-theme="light"] .theme-icon-dark { display: none; }
+[data-bs-theme="dark"]  .theme-icon-light { display: none; }
