@@ -12,9 +12,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             StatusSuratSeeder::class,
             KlasifikasiSeeder::class,
-            UserSeeder::class,
             SeedMasterDataSeeder::class,
-            SampleUsersSeeder::class,
+            PreservedDataSeeder::class,
             TestDataSeeder::class,
         ]);
     }

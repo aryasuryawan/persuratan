@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Disposisi;
 use App\Models\Klasifikasi;
 use App\Models\RiwayatStatus;
-use App\Models\Role;
 use App\Models\StatusSurat;
 use App\Models\SuratKeluar;
 use App\Models\SuratMasuk;
@@ -20,34 +19,17 @@ class TestDataSeeder extends Seeder
         $sekretaris = User::where('email', 'sekretaris@dd.or.id')->first();
         $pimpinan = User::where('email', 'pimpinan@dd.or.id')->first();
 
-        $role = Role::pluck('id', 'kode');
-
-        // Buat dummy user multi-direktorat
+        // Ambil user uji coba yang dipertahankan (PreservedDataSeeder)
         $users = [];
-        $direktorat = [
-            ['name' => 'Ahmad Fauzi', 'email' => 'ahmad@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat Program', 'dir_nama' => 'Program'],
-            ['name' => 'Siti Nurhaliza', 'email' => 'siti@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat Keuangan', 'dir_nama' => 'Keuangan'],
-            ['name' => 'Bambang Wijaya', 'email' => 'bambang@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat SDM', 'dir_nama' => 'SDM'],
-            ['name' => 'Rina Marlina', 'email' => 'rina@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat Fundraising', 'dir_nama' => 'Fundraising'],
-            ['name' => 'Dedi Kurniawan', 'email' => 'dedi@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat IT', 'dir_nama' => 'IT'],
-            ['name' => 'Fitri Handayani', 'email' => 'fitri@dd.or.id', 'role' => 'unit_lain', 'divisi_nama' => 'Direktorat Komunikasi', 'dir_nama' => 'Komunikasi'],
-            ['name' => 'Hendra Gunawan', 'email' => 'hendra@dd.or.id', 'role' => 'cc_security', 'divisi_nama' => 'CC Security', 'dir_nama' => 'Keamanan'],
-            ['name' => 'Dewi Sartika', 'email' => 'dewi@dd.or.id', 'role' => 'sekretaris', 'divisi_nama' => 'Sekretariat 2', 'dir_nama' => 'Sekretariat'],
+        $userEmails = [
+            'ahmad@dd.or.id', 'siti@dd.or.id', 'bambang@dd.or.id', 'rina@dd.or.id',
+            'dedi@dd.or.id', 'fitri@dd.or.id', 'hendra@dd.or.id', 'dewi@dd.or.id',
         ];
-
-        foreach ($direktorat as $d) {
-            $dir = \App\Models\Direktorat::where('nama', $d['dir_nama'])->first();
-            $div = \App\Models\Divisi::where('nama', $d['divisi_nama'])->first();
-            $u = User::create([
-                'name' => $d['name'],
-                'email' => $d['email'],
-                'password' => bcrypt('password'),
-                'role_id' => $role[$d['role']],
-                'is_active' => true,
-                'direktorat_id' => $dir?->id,
-                'divisi_id' => $div?->id,
-            ]);
-            $users[$d['email']] = $u;
+        foreach ($userEmails as $email) {
+            $u = User::where('email', $email)->first();
+            if ($u) {
+                $users[$email] = $u;
+            }
         }
 
         // Relasi sekretaris-pimpinan

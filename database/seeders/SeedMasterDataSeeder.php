@@ -74,28 +74,6 @@ class SeedMasterDataSeeder extends Seeder
             ]);
         }
 
-        // Ensure all unique struktur entries exist
-        $strukturData = [
-            ['kode' => 'SULSEL', 'nama' => 'Dompet Dhuafa Cabang Sulawesi Selatan'],
-            ['kode' => 'YWIB', 'nama' => 'Yayasan Wirausaha Indonesia Berdaya'],
-            ['kode' => 'Ka.Pengurus', 'nama' => 'Ketua Pengurus'],
-            ['kode' => 'DLTD', 'nama' => 'Direktorat Dakwah & LTD'],
-            ['kode' => 'PROG', 'nama' => 'Direktorat Program'],
-            ['kode' => 'FO', 'nama' => 'Direktorat Keuangan dan Operasional'],
-            ['kode' => 'WAF', 'nama' => 'Direktorat Mobilisasi Wakaf'],
-            ['kode' => 'ZIS', 'nama' => 'Direktorat Mobilisasi ZIS'],
-            ['kode' => 'DIRUT', 'nama' => 'Direktur Utama'],
-        ];
-        foreach ($strukturData as $s) {
-            $row = DB::table('strukturs')->where('kode', $s['kode'])->first();
-            if (!$row) {
-                DB::table('strukturs')->insert([
-                    'nama' => $s['nama'], 'kode' => $s['kode'], 'aktif' => true,
-                    'created_at' => now(), 'updated_at' => now(),
-                ]);
-            }
-        }
-
         $this->command->info('Master data seeded.');
     }
 }
