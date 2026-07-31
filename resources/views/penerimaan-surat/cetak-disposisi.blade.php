@@ -20,6 +20,19 @@
             $pelaksanaText .= ' (' . $disposisi->kepadaUser->jabatan . ')';
         }
     }
+
+    // Disposisi kepada (gabung user terpilih + free text)
+    $disposisiKepadaDb = $disposisi->disposisi_kepada ?? [];
+    $disposisiKepadaText = [];
+    foreach ($disposisiKepadaDb as $item) {
+        $user = \App\Models\User::where('name', $item)->first();
+        if ($user) {
+            $disposisiKepadaText[] = $user->name . ($user->jabatan ? ' (' . $user->jabatan . ')' : '');
+        } else {
+            $disposisiKepadaText[] = $item; // free text
+        }
+    }
+    $disposisiKepadaText = implode(', ', $disposisiKepadaText);
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -46,13 +59,17 @@
             </h1>
 
             <div class="absolute right-0 top-0 hidden sm:flex items-center space-x-1">
-                <div class="text-right">
-                    <span class="block text-[10px] font-black text-green-700 leading-none">DOMPET</span>
-                    <span class="block text-[10px] font-black text-green-700 leading-none">DHUAFA</span>
-                </div>
-                <div class="w-6 h-6 bg-green-600 rounded-bl-full flex items-center justify-center">
-                    <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                </div>
+                @if($logo)
+                    <img src="{{ \Storage::disk('public')->url($logo) }}" alt="Logo" style="height: 60px; width: auto;">
+                @else
+                    <div class="text-right">
+                        <span class="block text-[10px] font-black text-green-700 leading-none">DOMPET</span>
+                        <span class="block text-[10px] font-black text-green-700 leading-none">DHUAFA</span>
+                    </div>
+                    <div class="w-6 h-6 bg-green-600 rounded-bl-full flex items-center justify-center">
+                        <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    </div>
+                @endif
             </div>
         </div>
 

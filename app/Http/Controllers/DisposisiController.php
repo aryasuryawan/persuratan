@@ -49,8 +49,19 @@ class DisposisiController extends Controller
             'tanggal_deadline' => 'nullable|date',
             'instruksi' => 'nullable|array',
             'instruksi.*' => 'string',
+            'disposisi_kepada' => 'nullable|array',
+            'disposisi_kepada.*' => 'string',
+            'disposisi_kepada_free' => 'nullable|array',
+            'disposisi_kepada_free.*' => 'string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        // Merge selected users + free text input
+        $disposisiKepada = array_merge(
+            $data['disposisi_kepada'] ?? [],
+            array_filter($data['disposisi_kepada_free'] ?? [])
+        );
+        $data['disposisi_kepada'] = $disposisiKepada;
 
         $surat = SuratMasuk::with('status')->findOrFail($data['surat_masuk_id']);
         $user = Auth::user();
@@ -170,7 +181,18 @@ class DisposisiController extends Controller
             'tanggal_deadline' => 'nullable|date',
             'instruksi' => 'nullable|array',
             'instruksi.*' => 'string',
+            'disposisi_kepada' => 'nullable|array',
+            'disposisi_kepada.*' => 'string',
+            'disposisi_kepada_free' => 'nullable|array',
+            'disposisi_kepada_free.*' => 'string',
         ]);
+
+        // Merge selected users + free text input
+        $disposisiKepada = array_merge(
+            $data['disposisi_kepada'] ?? [],
+            array_filter($data['disposisi_kepada_free'] ?? [])
+        );
+        $data['disposisi_kepada'] = $disposisiKepada;
 
         $old = $disposisi->getAttributes();
         $disposisi->update($data);

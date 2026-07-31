@@ -57,16 +57,23 @@
                         </div>
                     </div>
 
-                    {{--                    <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Disposisi kepada</label>
                         <select name="disposisi_kepada[]" class="form-select" multiple>
                             @foreach(\App\Models\User::where('is_active', true)->get() as $u)
                             <option value="{{ $u->name }}">{{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif</option>
                             @endforeach
                         </select>
-                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple. Atau ketik nama bebas di bawah.</small>
-                        <input type="text" name="disposisi_kepada_free[]" class="form-control form-control-sm mt-2" placeholder="Tambah nama/jabatan bebas (opsional)">
-                    </div>--}}
+                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user. Tambah nama/jabatan bebas di bawah.</small>
+                        <div class="mt-2">
+                            <label class="form-label small">Tambah nama/jabatan bebas</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Contoh: Divisi Keuangan, Bagian Umum">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-add-disposisi-free">Tambah</button>
+                            </div>
+                            <div id="disposisi-free-list" class="mt-1"></div>
+                        </div>
+                    </div>
 
                     <div id="section-pelaksana" class="d-none">
                         <div class="mb-3">
@@ -116,6 +123,23 @@ document.getElementById('form-disposisi')?.addEventListener('submit', function()
     const btn = document.getElementById('btn-simpan-disposisi');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+});
+
+// Dynamic free text inputs for Disposisi kepada
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('btn-add-disposisi-free');
+    const list = document.getElementById('disposisi-free-list');
+    let idx = 0;
+    if (addBtn && list) {
+        addBtn.addEventListener('click', function() {
+            idx++;
+            const div = document.createElement('div');
+            div.className = 'input-group input-group-sm mt-1';
+            div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama/jabatan bebas">' +
+                '<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.input-group\').remove()">Hapus</button>';
+            list.appendChild(div);
+        });
+    }
 });
 </script>
 @endpush

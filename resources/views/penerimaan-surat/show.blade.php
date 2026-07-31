@@ -172,7 +172,7 @@
                                                 @endforeach
                                             </div>
                                         </div>
-                                        {{--                                            <div class="mb-2">
+                                        <div class="mb-2">
                                             <label class="form-label small">Disposisi kepada</label>
                                             <select name="disposisi_kepada[]" class="form-select form-select-sm" multiple>
                                                 @foreach(\App\Models\User::where('is_active', true)->get() as $u)
@@ -181,9 +181,16 @@
                                                 </option>
                                                 @endforeach
                                             </select>
-                                            <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple.</small>
-                                            <input type="text" name="disposisi_kepada_free[]" class="form-control form-control-sm mt-1" placeholder="Tambah nama/jabatan bebas (opsional)">
-                                        </div>--}}
+                                            <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user.</small>
+                                            <div class="mt-1">
+                                                <label class="form-label small">Tambah nama/jabatan bebas</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Contoh: Divisi Keuangan, Bagian Umum">
+                                                    <button type="button" class="btn btn-outline-secondary" id="btn-add-disposisi-free-edit-{{ $d->id }}">Tambah</button>
+                                                </div>
+                                                <div id="disposisi-free-list-edit-{{ $d->id }}" class="mt-1"></div>
+                                            </div>
+                                        </div>
                                         <div class="mb-2">
                                             <label class="form-label small">Isi Disposisi</label>
                                             <textarea name="catatan" class="form-control form-control-sm" rows="3">{{ old('catatan', $d->catatan) }}</textarea>
@@ -636,5 +643,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAksesList();
 });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[id^="btn-add-disposisi-free-edit-"]').forEach(function(btn) {
+                const dispId = btn.id.replace('btn-add-disposisi-free-edit-', '');
+                const list = document.getElementById('disposisi-free-list-edit-' + dispId);
+                if (!list) return;
+                btn.addEventListener('click', function() {
+                    const div = document.createElement('div');
+                    div.className = 'input-group input-group-sm mt-1';
+                    div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama/jabatan bebas">' +
+                        '<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.input-group\').remove()">Hapus</button>';
+                    list.appendChild(div);
+                });
+            });
+        });
     </script>
 @endcan
