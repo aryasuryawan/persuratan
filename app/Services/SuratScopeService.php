@@ -18,9 +18,13 @@ class SuratScopeService
             'pimpinan' => $query->whereHas('disposisi', fn($q) =>
                 $q->where('atas_nama_pimpinan_id', $user->id)
             ),
-            'unit_lain' => $query->whereHas('disposisi', fn($q) =>
-                $q->where('kepada_user_id', $user->id)
-            ),
+            'unit_lain' => $query->where(function ($q) use ($user) {
+                $q->whereHas('disposisi', fn($d) =>
+                    $d->where('kepada_user_id', $user->id)
+                )->orWhereHas('aksesManual', fn($a) =>
+                    $a->where('user_id', $user->id)
+                );
+            }),
             'cc_security' => $query->where('created_by', $user->id),
             default => $query->whereRaw('1=0'),
         };
@@ -31,6 +35,8 @@ class SuratScopeService
         $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'organisasiPengirim']);
 
         $query = $this->scopeForUser($query, $user);
+
+        $query = $this->scopeSuratRestricted($query, $user);
 
         if (!empty($filters['search'])) {
             $s = $filters['search'];
@@ -46,5 +52,43 @@ class SuratScopeService
         }
 
         return $query->latest('tanggal_diterima')->paginate(request('per_page', 25));
+    }
+
+    private function scopeSuratRestricted(Builder $query, User $user): Builder
+    {
+        if ($user->hasRole('admin')) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->whereHas('klasifikasi', fn($kl) => $kl->where('kode', '!=', 'restricted'))
+              ->orWhere(function ($qr) use ($user) {
+                  $qr->whereHas('klasifikasi', fn($kl) => $kl->where('kode', 'restricted'))
+                     ->where(function ($ra) use ($user) {
+                         $ra->orWhereHas('disposisi', fn($d) =>
+                             $d->where('atas_nama_pimpinan_id', $user->id)
+                         );
+
+                         if ($user->hasRole('sekretaris')) {
+                             $ra->orWhere(function ($sq) use ($user) {
+                                 $sq->whereExists(function ($exists) use ($user) {
+                                     $exists->selectRaw(1)
+                                         ->from('disposisi as d3')
+                                         ->join('sekretaris_pimpinan as sp', 'sp.pimpinan_id', '=', 'd3.atas_nama_pimpinan_id')
+                                         ->whereRaw('d3.surat_masuk_id = surat_masuk.id')
+                                         ->where('sp.sekretaris_id', $user->id)
+                                         ->where('sp.is_active', true);
+                                 });
+                             });
+                         }
+
+                         if (! $user->hasRole('cc_security')) {
+                             $ra->orWhereHas('aksesManual', fn($a) =>
+                                 $a->where('user_id', $user->id)
+                             );
+                         }
+                     });
+              });
+        });
     }
 }

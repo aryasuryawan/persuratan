@@ -4,6 +4,8 @@ import 'chart.js/auto';
 import './simpel/tracking-chart.js';
 import './simpel/disposisi-form.js';
 import './simpel/surat-table.js';
+import './simpel/repeater-lampiran.js';
+import './simpel/galeri-lightbox.js';
 
 // Dashboard 2 charts — only load on dashboard2 route
 if (window.location.pathname === '/dashboard2') {

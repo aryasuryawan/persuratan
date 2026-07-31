@@ -44,6 +44,28 @@ class UserController extends Controller
         return view('master.users.index', compact('users', 'roles', 'direktorats'));
     }
 
+    public function search(Request $request)
+    {
+        $q = $request->query('q');
+
+        $users = User::with('role')
+            ->where('name', 'like', "%{$q}%")
+            ->orWhere('email', 'like', "%{$q}%")
+            ->where('is_active', true)
+            ->where('id', '!=', auth()->id())
+            ->limit(10)
+            ->get();
+
+        return response()->json($users->map(function ($u) {
+            return [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'role_label' => $u->role?->label,
+            ];
+        }));
+    }
+
     public function create()
     {
         $roles = Role::all();

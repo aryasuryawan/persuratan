@@ -305,14 +305,26 @@ class PenerimaanSuratController extends Controller
 
     public function show(string $uuid, AksesKlasifikasiService $akses)
     {
-        $surat = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'verifikator', 'riwayatStatus.statusKe', 'riwayatStatus.dilakukanOleh.role', 'riwayatStatus.atasNamaPimpinan.role', 'riwayatStatus.disposisi.kepadaUser.direktorat', 'riwayatStatus.disposisi.kepadaUser.divisi', 'riwayatStatus.disposisi.kepadaUser.departemen', 'riwayatPerubahanData.dilakukanOleh', 'riwayatPerubahanData.disposisi.kepadaUser', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.lampiran', 'disposisi.followUps.user'])
+        $surat = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'verifikator', 'riwayatStatus.statusKe', 'riwayatStatus.dilakukanOleh.role', 'riwayatStatus.atasNamaPimpinan.role', 'riwayatStatus.disposisi.kepadaUser.direktorat', 'riwayatStatus.disposisi.kepadaUser.divisi', 'riwayatStatus.disposisi.kepadaUser.departemen', 'riwayatPerubahanData.dilakukanOleh', 'riwayatPerubahanData.disposisi.kepadaUser', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.lampiran', 'disposisi.followUps.user', 'aksesManual.user', 'aksesManual.diberikanOleh'])
             ->where('uuid', $uuid)->firstOrFail();
 
-        if (!$akses->canAccess(Auth::user(), $surat->klasifikasi)) {
-            abort(403, 'Anda tidak memiliki akses ke surat ini.');
-        }
+        $this->authorize('view', $surat);
 
-        return view('penerimaan-surat.show', compact('surat'));
+        $canManageAkses = $surat->klasifikasi->kode === 'restricted' && (
+            Auth::user()->hasRole('admin') ||
+            $surat->disposisi()->where('atas_nama_pimpinan_id', Auth::id())->exists() ||
+            (Auth::user()->hasRole('sekretaris') && $surat->disposisi()->whereNotNull('atas_nama_pimpinan_id')->where(function ($q) {
+                $q->whereExists(function ($sub) {
+                    $sub->selectRaw(1)
+                        ->from('sekretaris_pimpinan as sp')
+                        ->whereRaw('sp.pimpinan_id = disposisi.atas_nama_pimpinan_id')
+                        ->where('sp.sekretaris_id', Auth::id())
+                        ->where('sp.is_active', true);
+                });
+            })->exists())
+        );
+
+        return view('penerimaan-surat.show', compact('surat', 'canManageAkses'));
     }
 
     public function cetakDisposisi(string $uuid, AksesKlasifikasiService $akses)
@@ -325,5 +337,53 @@ class PenerimaanSuratController extends Controller
         }
 
         return view('penerimaan-surat.cetak-disposisi', compact('surat'));
+    }
+
+    public function listAkses(string $uuid)
+    {
+        $surat = SuratMasuk::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('view', $surat);
+
+        $akses = $surat->aksesManual()->with(['user', 'diberikanOleh'])->get();
+
+        return response()->json($akses->map(function ($a) {
+            return [
+                'user_id' => $a->user_id,
+                'user_name' => $a->user->name,
+                'user_email' => $a->user->email,
+                'diberikan_oleh_name' => $a->diberikanOleh->name,
+                'created_at_formatted' => $a->created_at?->format('d/m/Y H:i'),
+            ];
+        }));
+    }
+
+    public function assignAkses(Request $request, string $uuid)
+    {
+        $surat = SuratMasuk::where('uuid', $uuid)->firstOrFail();
+
+        $this->authorize('assignAkses', $surat);
+
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $surat->aksesManual()->where('user_id', $data['user_id'])->firstOrCreate([
+            'user_id' => $data['user_id'],
+            'level' => 'view',
+            'diberikan_oleh_id' => Auth::id(),
+        ]);
+
+        return response()->json(['message' => 'Akses berhasil diberikan.']);
+    }
+
+    public function removeAkses(string $uuid, string $userId)
+    {
+        $surat = SuratMasuk::where('uuid', $uuid)->firstOrFail();
+
+        $this->authorize('assignAkses', $surat);
+
+        $surat->aksesManual()->where('user_id', $userId)->delete();
+
+        return response()->json(['message' => 'Akses berhasil dicabut.']);
     }
 }

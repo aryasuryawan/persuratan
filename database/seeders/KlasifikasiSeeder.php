@@ -15,6 +15,7 @@ class KlasifikasiSeeder extends Seeder
             ['kode' => 'SDM', 'nama' => 'SDM', 'color' => 'info', 'is_rahasia' => true],
             ['kode' => 'PROGRAM', 'nama' => 'Program', 'color' => 'primary', 'is_rahasia' => false],
             ['kode' => 'RAHASIA', 'nama' => 'Rahasia', 'color' => 'danger', 'is_rahasia' => true],
+            ['kode' => 'restricted', 'nama' => 'Restricted', 'color' => 'dark', 'is_rahasia' => true],
         ];
 
         foreach ($data as $d) {

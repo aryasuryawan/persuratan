@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,7 +19,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'uuid', 'role_id', 'direktorat_id', 'divisi_id', 'departemen_id', 'name', 'title', 'email', 'password',
-        'is_active',
+        'google_id', 'avatar_url', 'is_active',
     ];
 
     protected function casts(): array

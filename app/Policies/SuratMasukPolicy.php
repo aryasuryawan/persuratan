@@ -23,11 +23,44 @@ class SuratMasukPolicy
 
     public function view(User $user, SuratMasuk $suratMasuk): bool
     {
+        if ($suratMasuk->klasifikasi->kode === 'restricted') {
+            if ($user->hasRole('admin')) {
+                return true;
+            }
+
+            if ($user->hasRole('cc_security')) {
+                return false;
+            }
+
+            if ($suratMasuk->disposisi()->where('atas_nama_pimpinan_id', $user->id)->exists()) {
+                return true;
+            }
+
+            if ($user->hasRole('sekretaris')) {
+                if ($suratMasuk->disposisi()->whereNotNull('atas_nama_pimpinan_id')->whereExists(function ($sub) use ($user) {
+                    $sub->selectRaw(1)
+                        ->from('disposisi as d3')
+                        ->join('sekretaris_pimpinan as sp', 'sp.pimpinan_id', '=', 'd3.atas_nama_pimpinan_id')
+                        ->whereRaw('d3.surat_masuk_id = disposisi.surat_masuk_id')
+                        ->where('sp.sekretaris_id', $user->id)
+                        ->where('sp.is_active', true);
+                })->exists()) {
+                    return true;
+                }
+            }
+
+            if ($suratMasuk->punyaAksesManual($user)) {
+                return true;
+            }
+
+            return false;
+        }
+
         if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
             return true;
         }
 
-        if ($suratMasuk->klasifikasi->is_rahasia && !$user->hasRole('pimpinan')) {
+        if ($suratMasuk->klasifikasi->is_rahasia && ! $user->hasRole('pimpinan')) {
             return false;
         }
 
@@ -42,5 +75,30 @@ class SuratMasukPolicy
     public function dispose(User $user): bool
     {
         return in_array($user->role->kode, ['sekretaris', 'pimpinan', 'admin']);
+    }
+
+    public function assignAkses(User $user, SuratMasuk $suratMasuk): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($suratMasuk->disposisi()->where('atas_nama_pimpinan_id', $user->id)->exists()) {
+            return true;
+        }
+
+        if ($user->hasRole('sekretaris')) {
+            return $suratMasuk->disposisi()->whereNotNull('atas_nama_pimpinan_id')->where(function ($q) use ($user) {
+                $q->whereExists(function ($sub) use ($user) {
+                    $sub->selectRaw(1)
+                        ->from('sekretaris_pimpinan as sp')
+                        ->whereRaw('sp.pimpinan_id = disposisi.atas_nama_pimpinan_id')
+                        ->where('sp.sekretaris_id', $user->id)
+                        ->where('sp.is_active', true);
+                });
+            })->exists();
+        }
+
+        return false;
     }
 }

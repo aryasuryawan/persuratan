@@ -77,6 +77,17 @@
                     <button type="submit" class="btn btn-primary w-100">Login</button>
                 </div>
             </form>
+
+            @if(config('services.google.client_id'))
+                <div class="hr-text">atau</div>
+
+                <div class="mb-3">
+                    <a href="{{ route('google.login') }}" class="btn btn-outline-secondary w-100">
+                        <i class="ti ti-brand-google me-2"></i>
+                        Login dengan Google
+                    </a>
+                </div>
+            @endif
         </div>
     </div>
 

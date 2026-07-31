@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\SuratMasuk;
+use App\Models\SuratKeluar;
+use App\Models\KomitePersetujuan;
+use App\Models\NotulensiRapim;
+use App\Models\SuratKeputusan;
 use App\Services\SuratScopeService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -36,6 +40,30 @@ class DashboardController extends Controller
             'suratKemarin' => (clone $suratQuery)->whereDate('tanggal_diterima', today()->subDay())->count(),
             'suratTerbaru' => (clone $suratQuery)->with(['status', 'klasifikasi'])
                 ->latest('tanggal_diterima')->take(5)->get(),
+            'suratKeluar' => SuratKeluar::query()->withoutTrashed()->count(),
+            'komitePersetujuan' => KomitePersetujuan::count(),
+            'notulensiRapim' => NotulensiRapim::count(),
+            'suratKeputusan' => SuratKeputusan::count(),
+            'arsipTerbaru' => collect([
+                ...KomitePersetujuan::query()->latest('tanggal_rapat')->limit(3)->get()->map(fn ($r) => [
+                    'judul' => $r->judul,
+                    'tanggal' => $r->tanggal_rapat,
+                    'modul' => 'Komite Persetujuan',
+                    'route' => route('komite-persetujuan.show', $r->uuid),
+                ]),
+                ...NotulensiRapim::query()->latest('tanggal')->limit(3)->get()->map(fn ($r) => [
+                    'judul' => $r->judul_rapat,
+                    'tanggal' => $r->tanggal,
+                    'modul' => 'Notulensi RAPIM',
+                    'route' => route('notulensi-rapim.show', $r->uuid),
+                ]),
+                ...SuratKeputusan::query()->latest('tanggal_sk')->limit(3)->get()->map(fn ($r) => [
+                    'judul' => $r->perihal,
+                    'tanggal' => $r->tanggal_sk,
+                    'modul' => 'Surat Keputusan',
+                    'route' => route('surat-keputusan.show', $r->uuid),
+                ]),
+            ])->sortByDesc('tanggal')->take(5)->values(),
         ];
 
         return view('dashboard', $data);

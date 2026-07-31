@@ -59,6 +59,20 @@
 </li>
 @endif
 
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+        <span class="nav-link-icon d-md-none d-lg-inline-block">
+            <span class="ti ti-archive"></span>
+        </span>
+        <span class="nav-link-title">Arsip</span>
+    </a>
+    <div class="dropdown-menu">
+        <a class="dropdown-item {{ request()->routeIs('surat-keputusan*') ? 'active' : '' }}" href="{{ route('surat-keputusan.index') }}">Surat Keputusan</a>
+        <a class="dropdown-item {{ request()->routeIs('komite-persetujuan*') ? 'active' : '' }}" href="{{ route('komite-persetujuan.index') }}">Hasil Komite Persetujuan</a>
+        <a class="dropdown-item {{ request()->routeIs('notulensi-rapim*') ? 'active' : '' }}" href="{{ route('notulensi-rapim.index') }}">Notulensi Rapim</a>
+    </div>
+</li>
+
 <li class="nav-item">
     <a class="nav-link {{ request()->routeIs('tracking*') ? 'active' : '' }}" href="{{ route('tracking.index') }}">
         <span class="nav-link-icon d-md-none d-lg-inline-block">

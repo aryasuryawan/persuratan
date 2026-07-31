@@ -3,20 +3,23 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\DisposisiFollowUpController;
+use App\Http\Controllers\KomitePersetujuanController;
 use App\Http\Controllers\Master\DepartemenController;
-use App\Http\Controllers\Master\DivisiController;
 use App\Http\Controllers\Master\DirektoratController;
+use App\Http\Controllers\Master\DivisiController;
 use App\Http\Controllers\Master\KlasifikasiController;
 use App\Http\Controllers\Master\KodeSuratController;
 use App\Http\Controllers\Master\OrganisasiPengirimController;
 use App\Http\Controllers\Master\RoleController;
-use App\Http\Controllers\Master\SettingController;
 use App\Http\Controllers\Master\SekretarisPimpinanController;
+use App\Http\Controllers\Master\SettingController;
 use App\Http\Controllers\Master\StrukturController;
 use App\Http\Controllers\Master\UserController;
+use App\Http\Controllers\NotulensiRapimController;
 use App\Http\Controllers\PenerimaanSuratController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuratKeluarController;
+use App\Http\Controllers\SuratKeputusanController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\VerifikasiSuratController;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +68,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{uuid}', [SuratKeluarController::class, 'show'])->name('show');
     });
 
+    Route::resource('surat-keputusan', SuratKeputusanController::class);
+    Route::resource('komite-persetujuan', KomitePersetujuanController::class);
+    Route::resource('notulensi-rapim', NotulensiRapimController::class);
+
     Route::prefix('tracking')->name('tracking.')->group(function () {
         Route::get('/', [TrackingController::class, 'index'])->name('index');
     });
@@ -91,9 +98,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
     Route::get('/surat-masuk', [PenerimaanSuratController::class, 'index'])->name('surat-masuk');
+    Route::post('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'assignAkses'])->name('surat-masuk.assign-akses');
+    Route::delete('/surat-masuk/{uuid}/akses/{userId}', [PenerimaanSuratController::class, 'removeAkses'])->name('surat-masuk.remove-akses');
+    Route::get('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'listAkses'])->name('surat-masuk.list-akses');
+    Route::get('/user-search', [UserController::class, 'search'])->name('user-search');
     Route::get('/tracking/chart', [TrackingController::class, 'chart'])->name('tracking.chart');
     Route::get('/disposisi/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('disposisi.pelaksana-options');
     Route::get('/dashboard/chart', [DashboardController::class, 'chart'])->name('dashboard.chart');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

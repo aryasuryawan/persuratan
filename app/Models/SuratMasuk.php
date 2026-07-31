@@ -81,4 +81,14 @@ class SuratMasuk extends Model
     {
         return $this->hasMany(RiwayatPerubahanData::class);
     }
+
+    public function aksesManual(): HasMany
+    {
+        return $this->hasMany(SuratAkses::class, 'surat_id');
+    }
+
+    public function punyaAksesManual(User $user): bool
+    {
+        return $this->aksesManual()->where('user_id', $user->id)->exists();
+    }
 }
