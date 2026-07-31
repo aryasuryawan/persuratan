@@ -48,25 +48,17 @@
 </li>
 @endif
 
-@if(in_array($role, ['sekretaris', 'unit_lain', 'admin']))
-<li class="nav-item">
-    <a class="nav-link {{ request()->routeIs('surat-keluar*') ? 'active' : '' }}" href="{{ route('surat-keluar.index') }}">
-        <span class="nav-link-icon d-md-none d-lg-inline-block">
-            <span class="ti ti-send"></span>
-        </span>
-        <span class="nav-link-title">Surat Keluar</span>
-    </a>
-</li>
-@endif
-
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
         <span class="nav-link-icon d-md-none d-lg-inline-block">
             <span class="ti ti-archive"></span>
         </span>
-        <span class="nav-link-title">Arsip</span>
+        <span class="nav-link-title">Arsip Lainnya</span>
     </a>
     <div class="dropdown-menu">
+        @if(in_array($role, ['sekretaris', 'unit_lain', 'admin']))
+        <a class="dropdown-item {{ request()->routeIs('surat-keluar*') ? 'active' : '' }}" href="{{ route('surat-keluar.index') }}">Surat Keluar</a>
+        @endif
         <a class="dropdown-item {{ request()->routeIs('surat-keputusan*') ? 'active' : '' }}" href="{{ route('surat-keputusan.index') }}">Surat Keputusan</a>
         <a class="dropdown-item {{ request()->routeIs('komite-persetujuan*') ? 'active' : '' }}" href="{{ route('komite-persetujuan.index') }}">Hasil Komite Persetujuan</a>
         <a class="dropdown-item {{ request()->routeIs('notulensi-rapim*') ? 'active' : '' }}" href="{{ route('notulensi-rapim.index') }}">Notulensi Rapim</a>
