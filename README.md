@@ -6,17 +6,18 @@ Aplikasi manajemen surat masuk & surat keluar berbasis web untuk Yayasan Dompet 
 
 - **Penerimaan Surat Masuk** — pencatatan surat, upload lampiran (PDF/JPG/PNG), klasifikasi & sifat surat
 - **Verifikasi Surat** — alur verifikasi oleh sekretaris sebelum diteruskan
-- **Disposisi** — disposisi ke unit pelaksana atau langsung pimpinan, catatan pimpinan, batas waktu, upload lampiran, dan proteksi submit ganda
+- **Disposisi** — disposisi ke unit pelaksana atau langsung pimpinan, catatan pimpinan, batas waktu, upload lampiran, proteksi submit ganda, **edit inline**, **hapus** (sekretaris/admin/pembuat), **cetak lembar disposisi** dengan Instruksi, Pelaksana, Batas waktu
 - **Follow Up Disposisi** — tindak lanjut berjenjang dari pelaksana dengan lampiran
-- **Cetak Lembar Disposisi** — layout standar siap cetak (kop lembaga dari pengaturan, kolom tanda tangan)
-- **Riwayat Status & Timeline** — lacak pergerakan surat lengkap dengan siapa/kepada siapa dan deadline
-- **Surat Keluar** — pencatatan dengan kode surat master, keterkaitan ke surat masuk
+- **Riwayat Status & Timeline** — lacak pergerakan surat lengkap dengan siapa/kepada siapa, deadline, dan **tab Perubahan Data** (instruksi, pelaksana, catatan, deadline)
+- **Surat Keluar** — pencatatan dengan kode surat master, keterkaitan ke surat masuk (masuk ke menu **Arsip Lainnya**)
 - **Tracking** — pelacakan surat dengan grafik tren
 - **Dashboard** — statistik surat per status, tren masuk/keluar (Chart.js & ECharts)
 - **Master Data** — direktorat, divisi, departemen, klasifikasi, kode surat, role, pengguna, sekretaris-pimpinan
 - **Pengaturan** — nama aplikasi/lembaga, logo, favicon, alamat, kontak, footer
 - **Manajemen Pengguna** — multi role, penempatan unit (direktorat/divisi/departemen), jabatan
 - **Level Akses Klasifikasi** — kontrol akses berdasarkan klasifikasi & sifat surat
+- **Modul Arsip Lainnya** — Surat Keputusan, Hasil Komite Persetujuan, Notulensi Rapim (metadata + lampiran + foto kegiatan, tanpa workflow approval)
+- **Login Google (Socialite)** — tombol "Login dengan Google" di halaman login, **hanya user existing** (email cocok), validasi email_verified Google, domain allowlist via `GOOGLE_ALLOWED_DOMAINS`
 
 ## Teknologi
 
@@ -64,6 +65,22 @@ npm run build
 php artisan serve
 # atau `composer dev` untuk dev server + queue + vite
 ```
+
+## Google Login Setup
+
+1. Google Cloud Console → OAuth consent screen (External) → Test users (tambah email tester)
+2. Credentials → OAuth client ID (Web) → Authorized redirect URI:
+   - **Local**: `http://localhost/auth/google/callback` (set `APP_URL=http://localhost`)
+   - **Production**: `https://domain.com/auth/google/callback` (wajib HTTPS)
+3. Isi `.env`:
+   ```
+   GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=xxx
+   GOOGLE_REDIRECT_URI=https://domain.com/auth/google/callback
+   GOOGLE_ALLOWED_DOMAINS=dompetdhuafa.org,gmail.com
+   ```
+4. `php artisan config:clear`
+5. Tombol "Login dengan Google" muncul di halaman login (hanya jika `GOOGLE_CLIENT_ID` diisi)
 
 ## Akun Default (Seeder)
 
@@ -118,7 +135,7 @@ app/
   Http/Controllers/   # Controller (termasuk Master/)
   Listeners/          # Listener pencatatan riwayat
   Models/             # Model Eloquent
-  Services/           # AksesKlasifikasiService, SuratScopeService
+  Services/           # ArsipMediaService, AksesKlasifikasiService, SuratScopeService
 database/
   migrations/         # Skema database
   seeders/            # Seeder data awal & contoh
@@ -126,7 +143,11 @@ resources/views/
   penerimaan-surat/   # Detail surat + cetak lembar disposisi
   disposisi/          # Daftar surat untuk disposisi
   surat-keluar/       # CRUD surat keluar
+  surat-keputusan/    # Modul Surat Keputusan (arsip)
+  komite-persetujuan/ # Modul Hasil Komite Persetujuan (arsip)
+  notulensi-rapim/    # Modul Notulensi Rapim (arsip)
   master/             # Master data & pengaturan
+  arsip/partials/     # Partials lampiran, foto, galeri
 routes/web.php        # Definisi route
 ```
 
