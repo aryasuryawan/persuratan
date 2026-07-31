@@ -26,6 +26,9 @@
                 <div class="badge-row">
                     <span class="badge {{ $jenisBadge }}">{{ $komite->jenis === 'pembelian' ? 'Pembelian' : 'Prinsip Proyek' }}</span>
                     <span class="badge {{ $hasilBadge }} text-capitalize">{{ $komite->hasil }}</span>
+                    @if($komite->is_rahasia)
+                    <span class="badge badge-warning">Rahasia</span>
+                    @endif
                     <span class="badge badge-muted">{{ $komite->tanggal_rapat->format('d/m/Y') }}</span>
                 </div>
             </div>
@@ -92,6 +95,8 @@
 
         @include('arsip.partials._lampiran-list', ['rekaman' => $komite])
         @include('arsip.partials._galeri', ['rekaman' => $komite])
+        @include('arsip.partials._arsip-akses', ['rekaman' => $komite, 'modul' => 'komite-persetujuan'])
+        @include('arsip.partials._riwayat-arsip', ['rekaman' => $komite])
 
     </div>
 </div>

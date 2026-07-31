@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\KomitePersetujuanRequest;
 use App\Models\KomitePersetujuan;
+use App\Services\ArsipAksesService;
 use App\Services\ArsipMediaService;
 use Illuminate\Http\Request;
 
@@ -14,10 +15,12 @@ class KomitePersetujuanController extends Controller
         $this->authorizeResource(KomitePersetujuan::class, 'komite_persetujuan');
     }
 
-    public function index(Request $request)
+    public function index(Request $request, ArsipAksesService $akses)
     {
-        $query = KomitePersetujuan::with('dicatatOleh')
-            ->withCount(['lampiran', 'fotoKegiatan']);
+        $query = $akses->scopeUntukUser(
+            KomitePersetujuan::with('dicatatOleh')->withCount(['lampiran', 'fotoKegiatan']),
+            $request->user()
+        );
 
         if ($tahun = $request->get('tahun')) {
             $query->whereYear('tanggal_rapat', $tahun);
@@ -50,12 +53,10 @@ class KomitePersetujuanController extends Controller
 
     public function store(KomitePersetujuanRequest $request, ArsipMediaService $media)
     {
-        $data = $request->safe()->except([
-            'lampiran', 'lampiran_keterangan',
-            'foto_kegiatan', 'foto_caption',
-            'hapus_lampiran', 'hapus_foto',
-        ]);
+        $data = $request->validated();
+        unset($data['lampiran'], $data['lampiran_keterangan'], $data['foto_kegiatan'], $data['foto_caption'], $data['hapus_lampiran'], $data['hapus_foto']);
         $data['dicatat_oleh_id'] = $request->user()->id;
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
 
         $komite = KomitePersetujuan::create($data);
 
@@ -68,7 +69,7 @@ class KomitePersetujuanController extends Controller
 
     public function show(KomitePersetujuan $komitePersetujuan)
     {
-        $komitePersetujuan->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan']);
+        $komitePersetujuan->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan', 'riwayatArsip.dilakukanOleh']);
 
         return view('komite-persetujuan.show', ['komite' => $komitePersetujuan]);
     }
@@ -82,11 +83,11 @@ class KomitePersetujuanController extends Controller
 
     public function update(KomitePersetujuanRequest $request, KomitePersetujuan $komitePersetujuan, ArsipMediaService $media)
     {
-        $data = $request->safe()->except([
-            'lampiran', 'lampiran_keterangan',
-            'foto_kegiatan', 'foto_caption',
-            'hapus_lampiran', 'hapus_foto',
-        ]);
+        $data = $request->validated();
+        unset($data['lampiran'], $data['lampiran_keterangan'], $data['foto_kegiatan'], $data['foto_caption'], $data['hapus_lampiran'], $data['hapus_foto']);
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
+
+        $komitePersetujuan->catatPerubahanData($data, $komitePersetujuan->getAttributes());
         $komitePersetujuan->update($data);
 
         $media->hapusDipilih(

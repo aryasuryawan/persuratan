@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\NotulensiRapimRequest;
 use App\Models\NotulensiRapim;
+use App\Services\ArsipAksesService;
 use App\Services\ArsipMediaService;
 use Illuminate\Http\Request;
 
@@ -14,10 +15,12 @@ class NotulensiRapimController extends Controller
         $this->authorizeResource(NotulensiRapim::class, 'notulensi_rapim');
     }
 
-    public function index(Request $request)
+    public function index(Request $request, ArsipAksesService $akses)
     {
-        $query = NotulensiRapim::with('dicatatOleh')
-            ->withCount(['lampiran', 'fotoKegiatan']);
+        $query = $akses->scopeUntukUser(
+            NotulensiRapim::with('dicatatOleh')->withCount(['lampiran', 'fotoKegiatan']),
+            $request->user()
+        );
 
         if ($tahun = $request->get('tahun')) {
             $query->whereYear('tanggal', $tahun);
@@ -50,12 +53,10 @@ class NotulensiRapimController extends Controller
 
     public function store(NotulensiRapimRequest $request, ArsipMediaService $media)
     {
-        $data = $request->safe()->except([
-            'lampiran', 'lampiran_keterangan',
-            'foto_kegiatan', 'foto_caption',
-            'hapus_lampiran', 'hapus_foto',
-        ]);
+        $data = $request->validated();
+        unset($data['lampiran'], $data['lampiran_keterangan'], $data['foto_kegiatan'], $data['foto_caption'], $data['hapus_lampiran'], $data['hapus_foto']);
         $data['dicatat_oleh_id'] = $request->user()->id;
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
 
         $rapim = NotulensiRapim::create($data);
 
@@ -68,7 +69,7 @@ class NotulensiRapimController extends Controller
 
     public function show(NotulensiRapim $notulensiRapim)
     {
-        $notulensiRapim->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan']);
+        $notulensiRapim->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan', 'riwayatArsip.dilakukanOleh']);
 
         return view('notulensi-rapim.show', ['rapim' => $notulensiRapim]);
     }
@@ -82,11 +83,11 @@ class NotulensiRapimController extends Controller
 
     public function update(NotulensiRapimRequest $request, NotulensiRapim $notulensiRapim, ArsipMediaService $media)
     {
-        $data = $request->safe()->except([
-            'lampiran', 'lampiran_keterangan',
-            'foto_kegiatan', 'foto_caption',
-            'hapus_lampiran', 'hapus_foto',
-        ]);
+        $data = $request->validated();
+        unset($data['lampiran'], $data['lampiran_keterangan'], $data['foto_kegiatan'], $data['foto_caption'], $data['hapus_lampiran'], $data['hapus_foto']);
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
+
+        $notulensiRapim->catatPerubahanData($data, $notulensiRapim->getAttributes());
         $notulensiRapim->update($data);
 
         $media->hapusDipilih(

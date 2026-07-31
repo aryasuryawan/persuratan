@@ -14,7 +14,19 @@ class NotulensiRapimPolicy
 
     public function view(User $user, NotulensiRapim $rapim): bool
     {
-        return true;
+        if (! $rapim->is_rahasia) {
+            return true;
+        }
+
+        if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
+            return true;
+        }
+
+        if ($user->hasRole('cc_security')) {
+            return false;
+        }
+
+        return $rapim->punyaAksesManual($user);
     }
 
     public function create(User $user): bool
@@ -28,6 +40,11 @@ class NotulensiRapimPolicy
     }
 
     public function delete(User $user, NotulensiRapim $rapim): bool
+    {
+        return in_array($user->role->kode, ['admin', 'sekretaris']);
+    }
+
+    public function assignAkses(User $user, NotulensiRapim $rapim): bool
     {
         return in_array($user->role->kode, ['admin', 'sekretaris']);
     }

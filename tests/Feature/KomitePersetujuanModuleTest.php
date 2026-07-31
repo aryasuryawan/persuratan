@@ -97,7 +97,7 @@ class KomitePersetujuanModuleTest extends TestCase
 
     public function test_upload_foto_tersimpan_dan_terhubung_polimorfik(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
 
         $this->actingAs($sekretaris)
@@ -119,7 +119,7 @@ class KomitePersetujuanModuleTest extends TestCase
 
         foreach ($komite->fotoKegiatan as $foto) {
             $this->assertSame('Rapat komite pembelian', $foto->caption);
-            Storage::disk('public')->assertExists($foto->path);
+            Storage::disk('local')->assertExists($foto->path);
         }
 
         $this->assertDatabaseHas('foto_kegiatan', [

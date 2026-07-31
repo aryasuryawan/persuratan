@@ -61,7 +61,12 @@
                     <tbody>
                         @forelse($arsip as $item)
                         <tr>
-                            <td>{{ $item->nomor_sk }}</td>
+                            <td>
+                                {{ $item->nomor_sk }}
+                                @if($item->is_rahasia)
+                                <span class="badge badge-warning" style="vertical-align:middle;">Rahasia</span>
+                                @endif
+                            </td>
                             <td><a href="{{ route('surat-keputusan.show', $item->uuid) }}">{{ $item->perihal }}</a></td>
                             <td>{{ $item->kategori ?? '-' }}</td>
                             <td>{{ $item->tanggal_sk->format('d/m/Y') }}</td>

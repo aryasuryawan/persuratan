@@ -47,6 +47,8 @@ class DisposisiController extends Controller
             'catatan' => 'nullable|string',
             'catatan_pimpinan' => 'nullable|string',
             'tanggal_deadline' => 'nullable|date',
+            'instruksi' => 'nullable|array',
+            'instruksi.*' => 'string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
@@ -67,6 +69,8 @@ class DisposisiController extends Controller
             catatan: $data['catatan'] ?? null,
             catatanPimpinan: $data['catatan_pimpinan'] ?? null,
             tanggalDeadline: $data['tanggal_deadline'] ?? null,
+            instruksi: $data['instruksi'] ?? null,
+            disposisiKepada: $data['disposisi_kepada'] ?? null,
             lampiran: $request->file('lampiran', []),
         );
 
@@ -164,6 +168,8 @@ class DisposisiController extends Controller
             'catatan' => 'nullable|string',
             'catatan_pimpinan' => 'nullable|string',
             'tanggal_deadline' => 'nullable|date',
+            'instruksi' => 'nullable|array',
+            'instruksi.*' => 'string',
         ]);
 
         $old = $disposisi->getAttributes();
@@ -173,7 +179,11 @@ class DisposisiController extends Controller
             'catatan' => 'Isi Disposisi',
             'catatan_pimpinan' => 'Catatan Pimpinan',
             'tanggal_deadline' => 'Batas Waktu',
+            'instruksi' => 'Instruksi',
+            'disposisi_kepada' => 'Disposisi kepada',
         ];
+
+        $arrayFields = ['instruksi', 'disposisi_kepada'];
 
         $perubahan = [];
         foreach ($labels as $field => $label) {
@@ -186,12 +196,15 @@ class DisposisiController extends Controller
             if ($field === 'tanggal_deadline') {
                 $lama = $modelVal ? \Carbon\Carbon::parse($modelVal)->format('d/m/Y') : '-';
                 $baru = $newVal ? \Carbon\Carbon::parse($newVal)->format('d/m/Y') : '-';
+            } elseif (in_array($field, $arrayFields)) {
+                $lama = $modelVal ? json_encode($modelVal) : '-';
+                $baru = $newVal ? json_encode($newVal) : '-';
             } else {
                 $lama = $modelVal ?? '-';
                 $baru = $newVal ?? '-';
             }
 
-            if ((string) $lama === (string) $baru) {
+            if ($lama === $baru) {
                 continue;
             }
 
@@ -213,5 +226,36 @@ class DisposisiController extends Controller
         }
 
         return back()->with('success', 'Disposisi berhasil diperbarui.');
+    }
+
+    public function destroy(Request $request, Disposisi $disposisi)
+    {
+        $user = Auth::user();
+
+        $isSekretarisAdmin = in_array($user->role->kode, ['sekretaris', 'admin']);
+        $isDari = $disposisi->dari_user_id === $user->id;
+
+        if (!$isSekretarisAdmin && !$isDari) {
+            abort(403, 'Anda tidak berhak menghapus disposisi ini.');
+        }
+
+        $surat = $disposisi->suratMasuk;
+        $disposisi->delete();
+
+        // Jika tidak ada disposisi lain, reset status surat
+        if ($surat->disposisi()->count() === 0) {
+            $oldStatusId = $surat->status_id;
+            $surat->update(['status_id' => statusId('received')]);
+
+            \App\Models\RiwayatStatus::create([
+                'surat_masuk_id' => $surat->id,
+                'status_dari_id' => $oldStatusId,
+                'status_ke_id' => statusId('received'),
+                'dilakukan_oleh_id' => $user->id,
+                'catatan' => 'Disposisi dihapus, status dikembalikan ke Diterima.',
+            ]);
+        }
+
+        return back()->with('success', 'Disposisi berhasil dihapus.');
     }
 }

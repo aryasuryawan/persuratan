@@ -69,6 +69,8 @@
 
         @include('arsip.partials._lampiran-list', ['rekaman' => $rapim])
         @include('arsip.partials._galeri', ['rekaman' => $rapim])
+        @include('arsip.partials._arsip-akses', ['rekaman' => $rapim, 'modul' => 'notulensi-rapim'])
+        @include('arsip.partials._riwayat-arsip', ['rekaman' => $rapim])
 
     </div>
 </div>

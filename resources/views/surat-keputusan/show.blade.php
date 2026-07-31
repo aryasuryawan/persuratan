@@ -19,6 +19,9 @@
                 <h1>{{ $sk->perihal }}</h1>
                 <div class="badge-row">
                     <span class="badge {{ $statusBadge }}">{{ $statusLabel }}</span>
+                    @if($sk->is_rahasia)
+                    <span class="badge badge-warning">Rahasia</span>
+                    @endif
                     @if($sk->kategori)
                     <span class="badge badge-muted">{{ $sk->kategori }}</span>
                     @endif
@@ -88,6 +91,8 @@
 
         @include('arsip.partials._lampiran-list', ['rekaman' => $sk])
         @include('arsip.partials._galeri', ['rekaman' => $sk])
+        @include('arsip.partials._arsip-akses', ['rekaman' => $sk, 'modul' => 'surat-keputusan'])
+        @include('arsip.partials._riwayat-arsip', ['rekaman' => $sk])
 
     </div>
 </div>

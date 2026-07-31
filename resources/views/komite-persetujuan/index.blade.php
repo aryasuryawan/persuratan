@@ -60,7 +60,12 @@
                     <tbody>
                         @forelse($arsip as $item)
                         <tr>
-                            <td><a href="{{ route('komite-persetujuan.show', $item->uuid) }}">{{ $item->judul }}</a></td>
+                            <td>
+                                <a href="{{ route('komite-persetujuan.show', $item->uuid) }}">{{ $item->judul }}</a>
+                                @if($item->is_rahasia)
+                                <span class="badge badge-warning" style="vertical-align:middle;">Rahasia</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($item->jenis === 'pembelian')
                                 <span class="badge badge-muted">Pembelian</span>

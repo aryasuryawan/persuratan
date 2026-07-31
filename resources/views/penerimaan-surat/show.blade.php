@@ -145,12 +145,45 @@
                                         </div>
                                     </div>
                                     @if($bisaSekretarisAdmin || $d->dari_user_id === auth()->id())
-                                    <svg class="icon-edit" data-bs-toggle="collapse" data-bs-target="#disposisi-edit-{{ $d->id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <svg class="icon-edit" data-bs-toggle="collapse" data-bs-target="#disposisi-edit-{{ $d->id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                        <form method="POST" action="{{ route('disposisi.destroy', $d) }}" class="d-inline" onsubmit="return confirm('Yakin hapus disposisi ini?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-link link-danger p-0" style="line-height:1;">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                     @endif
                                 </div>
                                 <div class="collapse" id="disposisi-edit-{{ $d->id }}">
                                     <form method="POST" action="{{ route('disposisi.update', $d) }}" enctype="multipart/form-data" class="mt-2">
                                         @csrf @method('PUT')
+                                        <div class="mb-2">
+                                            <label class="form-label small">Instruksi</label>
+                                            <div class="form-checklist">
+                                                @foreach(['Diperiksa', 'Diperhatikan', 'Ditindaklanjuti', 'Dilaksanakan', 'Arsip/Ditolak'] as $instruksi)
+                                                <label class="form-checklist-item">
+                                                    <input type="checkbox" name="instruksi[]" value="{{ $instruksi }}" 
+                                                        {{ in_array($instruksi, $d->instruksi ?? []) ? 'checked' : '' }} 
+                                                        class="form-checklist-input">
+                                                    <span class="form-checklist-label">{{ $instruksi }}</span>
+                                                </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        {{--                                            <div class="mb-2">
+                                            <label class="form-label small">Disposisi kepada</label>
+                                            <select name="disposisi_kepada[]" class="form-select form-select-sm" multiple>
+                                                @foreach(\App\Models\User::where('is_active', true)->get() as $u)
+                                                <option value="{{ $u->name }}" {{ in_array($u->name, $d->disposisi_kepada ?? []) ? 'selected' : '' }}>
+                                                    {{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple.</small>
+                                            <input type="text" name="disposisi_kepada_free[]" class="form-control form-control-sm mt-1" placeholder="Tambah nama/jabatan bebas (opsional)">
+                                        </div>--}}
                                         <div class="mb-2">
                                             <label class="form-label small">Isi Disposisi</label>
                                             <textarea name="catatan" class="form-control form-control-sm" rows="3">{{ old('catatan', $d->catatan) }}</textarea>
@@ -326,8 +359,8 @@
                     </button>
                     <div class="history-body" id="histbody">
                         <div class="tabs">
-                            <a class="tab active" href="#hist-status" data-tab="hist-status" onclick="event.preventDefault(); return switchHistTab('hist-status');">Status <span class="count">{{ $surat->riwayatStatus->count() }}</span></a>
-                            <a class="tab" href="#hist-data" data-tab="hist-data" onclick="event.preventDefault(); return switchHistTab('hist-data');">Perubahan Data <span class="count">{{ $surat->riwayatPerubahanData->count() }}</span></a>
+                            <a class="tab active" href="#hist-status" data-tab="hist-status" onclick="event.preventDefault(); switchHistTab('hist-status');">Status <span class="count">{{ $surat->riwayatStatus->count() }}</span></a>
+                            <a class="tab" href="#hist-data" data-tab="hist-data" onclick="event.preventDefault(); switchHistTab('hist-data');">Perubahan Data <span class="count">{{ $surat->riwayatPerubahanData->count() }}</span></a>
                         </div>
                         <div style="height:8px;"></div>
 
@@ -399,6 +432,15 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    function switchHistTab(id) {
+                        document.querySelectorAll('.history-body .tab').forEach(function(t) {
+                            t.classList.toggle('active', t.getAttribute('data-tab') === id);
+                        });
+                        document.getElementById('hist-status').style.display = (id === 'hist-status') ? '' : 'none';
+                        document.getElementById('hist-data').style.display = (id === 'hist-data') ? '' : 'none';
+                    }
+                </script>
                 @endcan
 
             </div>
@@ -594,16 +636,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAksesList();
 });
-</script>
-<script>
-function switchHistTab(id) {
-    document.querySelectorAll('.simpel-detail .tab').forEach(function(t) {
-        t.classList.toggle('active', t.getAttribute('data-tab') === id);
-    });
-    document.getElementById('hist-status').style.display = (id === 'hist-status') ? '' : 'none';
-    document.getElementById('hist-data').style.display = (id === 'hist-data') ? '' : 'none';
-    return false;
-}
-</script>
-@endpush
-@endif
+    </script>
+@endcan

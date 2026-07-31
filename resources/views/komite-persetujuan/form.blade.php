@@ -33,6 +33,24 @@
                     </div>
 
                     <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kategori</label>
+                            <input type="text" name="kategori" class="form-control @error('kategori') is-invalid @enderror" value="{{ old('kategori', $rekaman->kategori ?? '') }}" placeholder="mis. Aset, Proyek, Administrasi">
+                            @error('kategori') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Klasifikasi</label>
+                            <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror">
+                                <option value="">— Pilih Klasifikasi —</option>
+                                @foreach(\App\Models\Klasifikasi::orderBy('nama')->get() as $klas)
+                                    <option value="{{ $klas->id }}" {{ old('klasifikasi_id', $rekaman->klasifikasi_id ?? '') == $klas->id ? 'selected' : '' }}>{{ $klas->nama }}</option>
+                                @endforeach
+                            </select>
+                            @error('klasifikasi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label required">Jenis</label>
                             <select name="jenis" class="form-select @error('jenis') is-invalid @enderror" required>
@@ -67,6 +85,13 @@
                             @endforeach
                         </select>
                         @error('hasil') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-check form-switch">
+                            <input type="checkbox" name="is_rahasia" value="1" class="form-check-input" {{ old('is_rahasia', $rekaman->is_rahasia ?? false) ? 'checked' : '' }}>
+                            <span class="form-check-label">Rahasia — hanya admin, sekretaris, dan yang diberi akses yang dapat melihat</span>
+                        </label>
                     </div>
 
                     <div class="mb-3">

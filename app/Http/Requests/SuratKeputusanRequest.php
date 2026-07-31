@@ -22,6 +22,7 @@ class SuratKeputusanRequest extends ArsipFormRequest
             'nomor_sk' => ['required', 'string', 'max:255', $unique],
             'perihal' => ['required', 'string', 'max:255'],
             'kategori' => ['nullable', 'string', 'max:255'],
+            'klasifikasi_id' => ['nullable', 'exists:klasifikasi,id'],
             'tanggal_sk' => ['required', 'date'],
             'tanggal_berlaku' => ['nullable', 'date'],
             'ditetapkan_oleh' => ['nullable', 'string', 'max:255'],

@@ -87,12 +87,12 @@ class ArsipMediaService
     public function hapusDipilih(Model $parent, array $lampiranIds = [], array $fotoIds = []): void
     {
         foreach ($parent->lampiran()->whereIn('id', $lampiranIds)->get() as $lampiran) {
-            Storage::disk('public')->delete($lampiran->path);
+            Storage::disk('local')->delete($lampiran->path);
             $lampiran->delete();
         }
 
         foreach ($parent->fotoKegiatan()->whereIn('id', $fotoIds)->get() as $foto) {
-            Storage::disk('public')->delete($foto->path);
+            Storage::disk('local')->delete($foto->path);
             $foto->delete();
         }
     }
@@ -100,10 +100,10 @@ class ArsipMediaService
     public function hapusSemua(Model $parent): void
     {
         foreach ($parent->lampiran as $lampiran) {
-            Storage::disk('public')->delete($lampiran->path);
+            Storage::disk('local')->delete($lampiran->path);
         }
         foreach ($parent->fotoKegiatan as $foto) {
-            Storage::disk('public')->delete($foto->path);
+            Storage::disk('local')->delete($foto->path);
         }
 
         $parent->lampiran()->delete();
@@ -117,7 +117,7 @@ class ArsipMediaService
 
     private function pindahkan(UploadedFile $file, string $dir, string $filename): string
     {
-        $destDir = Storage::disk('public')->path($dir);
+        $destDir = Storage::disk('local')->path($dir);
         if (! is_dir($destDir)) {
             mkdir($destDir, 0755, true);
         }

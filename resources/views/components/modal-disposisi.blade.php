@@ -45,6 +45,29 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Instruksi</label>
+                        <div class="form-checklist">
+                            @foreach(['Diperiksa', 'Diperhatikan', 'Ditindaklanjuti', 'Dilaksanakan', 'Arsip/Ditolak'] as $instruksi)
+                            <label class="form-checklist-item">
+                                <input type="checkbox" name="instruksi[]" value="{{ $instruksi }}" class="form-checklist-input">
+                                <span class="form-checklist-label">{{ $instruksi }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{--                    <div class="mb-3">
+                        <label class="form-label">Disposisi kepada</label>
+                        <select name="disposisi_kepada[]" class="form-select" multiple>
+                            @foreach(\App\Models\User::where('is_active', true)->get() as $u)
+                            <option value="{{ $u->name }}">{{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif</option>
+                            @endforeach
+                        </select>
+                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple. Atau ketik nama bebas di bawah.</small>
+                        <input type="text" name="disposisi_kepada_free[]" class="form-control form-control-sm mt-2" placeholder="Tambah nama/jabatan bebas (opsional)">
+                    </div>--}}
+
                     <div id="section-pelaksana" class="d-none">
                         <div class="mb-3">
                             <label class="form-label">Pelaksana</label>

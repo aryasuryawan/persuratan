@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ArsipAksesController;
+use App\Http\Controllers\ArsipMediaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\DisposisiFollowUpController;
@@ -53,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [DisposisiController::class, 'store'])->name('store');
         Route::get('/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('pelaksana-options');
         Route::put('/{disposisi}', [DisposisiController::class, 'update'])->name('update');
+        Route::delete('/{disposisi}', [DisposisiController::class, 'destroy'])->name('destroy');
         Route::post('/{disposisi}/follow-up', [DisposisiFollowUpController::class, 'store'])->name('follow-up.store');
         Route::put('/{disposisi}/follow-up/{followUp}', [DisposisiFollowUpController::class, 'update'])->name('follow-up.update');
         Route::post('/{disposisi}/pindah', [DisposisiController::class, 'pindah'])->name('pindah');
@@ -71,6 +74,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('surat-keputusan', SuratKeputusanController::class);
     Route::resource('komite-persetujuan', KomitePersetujuanController::class);
     Route::resource('notulensi-rapim', NotulensiRapimController::class);
+
+    Route::prefix('arsip/{modul}/{uuid}')->name('arsip.akses.')->group(function () {
+        Route::get('/akses', [ArsipAksesController::class, 'listAkses'])->name('list-akses');
+        Route::post('/akses', [ArsipAksesController::class, 'assignAkses'])->name('assign-akses');
+        Route::delete('/akses/{userId}', [ArsipAksesController::class, 'removeAkses'])->name('remove-akses');
+    });
+
+    Route::prefix('arsip-media')->name('arsip-media.')->group(function () {
+        Route::get('/lampiran/{lampiran}', [ArsipMediaController::class, 'lampiran'])->name('lampiran.download');
+        Route::get('/foto/{foto}', [ArsipMediaController::class, 'foto'])->name('foto.stream');
+    });
 
     Route::prefix('tracking')->name('tracking.')->group(function () {
         Route::get('/', [TrackingController::class, 'index'])->name('index');

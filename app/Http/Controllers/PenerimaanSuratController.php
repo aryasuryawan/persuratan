@@ -367,11 +367,10 @@ class PenerimaanSuratController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
-        $surat->aksesManual()->where('user_id', $data['user_id'])->firstOrCreate([
-            'user_id' => $data['user_id'],
-            'level' => 'view',
-            'diberikan_oleh_id' => Auth::id(),
-        ]);
+        $surat->aksesManual()->firstOrCreate(
+            ['user_id' => $data['user_id']],
+            ['level' => 'view', 'diberikan_oleh_id' => Auth::id()],
+        );
 
         return response()->json(['message' => 'Akses berhasil diberikan.']);
     }

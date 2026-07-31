@@ -21,6 +21,8 @@ class BuatDisposisi
         ?string $catatan = null,
         ?string $catatanPimpinan = null,
         ?string $tanggalDeadline = null,
+        ?array $instruksi = null,
+        ?array $disposisiKepada = null,
         array $lampiran = [],
     ): Disposisi {
         $statusKe = $jenis === 'ke_pelaksana' ? 'assigned' : 'handled_by_leadership';
@@ -34,6 +36,8 @@ class BuatDisposisi
             'catatan' => $catatan,
             'catatan_pimpinan' => $catatanPimpinan,
             'tanggal_deadline' => $tanggalDeadline,
+            'instruksi' => $instruksi,
+            'disposisi_kepada' => $disposisiKepada,
         ]);
 
         foreach ($lampiran as $file) {

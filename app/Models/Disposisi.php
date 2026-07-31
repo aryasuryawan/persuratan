@@ -14,7 +14,7 @@ class Disposisi extends Model
     protected $fillable = [
         'uuid', 'surat_masuk_id', 'disposisi_induk_id', 'dari_user_id', 'kepada_user_id',
         'jenis', 'atas_nama_pimpinan_id', 'catatan', 'catatan_pimpinan',
-        'tanggal_deadline', 'completed_at',
+        'tanggal_deadline', 'completed_at', 'instruksi', 'disposisi_kepada',
     ];
 
     protected function casts(): array
@@ -22,6 +22,8 @@ class Disposisi extends Model
         return [
             'tanggal_deadline' => 'date',
             'completed_at' => 'datetime',
+            'instruksi' => 'array',
+            'disposisi_kepada' => 'array',
         ];
     }
 

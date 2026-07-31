@@ -20,6 +20,7 @@ abstract class ArsipFormRequest extends FormRequest
             'hapus_lampiran.*' => ['integer'],
             'hapus_foto' => ['nullable', 'array'],
             'hapus_foto.*' => ['integer'],
+            'is_rahasia' => ['boolean'],
         ];
     }
 }

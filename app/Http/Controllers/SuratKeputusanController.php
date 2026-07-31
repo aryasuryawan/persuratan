@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SuratKeputusanRequest;
 use App\Models\SuratKeputusan;
+use App\Services\ArsipAksesService;
 use App\Services\ArsipMediaService;
 use Illuminate\Http\Request;
 
@@ -14,10 +15,12 @@ class SuratKeputusanController extends Controller
         $this->authorizeResource(SuratKeputusan::class, 'surat_keputusan');
     }
 
-    public function index(Request $request)
+    public function index(Request $request, ArsipAksesService $akses)
     {
-        $query = SuratKeputusan::with('dicatatOleh')
-            ->withCount(['lampiran', 'fotoKegiatan']);
+        $query = $akses->scopeUntukUser(
+            SuratKeputusan::with('dicatatOleh')->withCount(['lampiran', 'fotoKegiatan']),
+            $request->user()
+        );
 
         if ($tahun = $request->get('tahun')) {
             $query->whereYear('tanggal_sk', $tahun);
@@ -56,6 +59,7 @@ class SuratKeputusanController extends Controller
             'hapus_lampiran', 'hapus_foto',
         ]);
         $data['dicatat_oleh_id'] = $request->user()->id;
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
 
         $sk = SuratKeputusan::create($data);
 
@@ -68,7 +72,7 @@ class SuratKeputusanController extends Controller
 
     public function show(SuratKeputusan $suratKeputusan)
     {
-        $suratKeputusan->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan']);
+        $suratKeputusan->load(['dicatatOleh', 'lampiran.diunggahOleh', 'fotoKegiatan', 'riwayatArsip.dilakukanOleh']);
 
         return view('surat-keputusan.show', ['sk' => $suratKeputusan]);
     }
@@ -82,11 +86,11 @@ class SuratKeputusanController extends Controller
 
     public function update(SuratKeputusanRequest $request, SuratKeputusan $suratKeputusan, ArsipMediaService $media)
     {
-        $data = $request->safe()->except([
-            'lampiran', 'lampiran_keterangan',
-            'foto_kegiatan', 'foto_caption',
-            'hapus_lampiran', 'hapus_foto',
-        ]);
+        $data = $request->validated();
+        unset($data['lampiran'], $data['lampiran_keterangan'], $data['foto_kegiatan'], $data['foto_caption'], $data['hapus_lampiran'], $data['hapus_foto']);
+        $data['is_rahasia'] = $request->boolean('is_rahasia');
+
+        $suratKeputusan->catatPerubahanData($data, $suratKeputusan->getAttributes());
         $suratKeputusan->update($data);
 
         $media->hapusDipilih(

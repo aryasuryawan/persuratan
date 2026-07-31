@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -82,9 +83,9 @@ class SuratMasuk extends Model
         return $this->hasMany(RiwayatPerubahanData::class);
     }
 
-    public function aksesManual(): HasMany
+    public function aksesManual(): MorphMany
     {
-        return $this->hasMany(SuratAkses::class, 'surat_id');
+        return $this->morphMany(SuratAkses::class, 'aksesable');
     }
 
     public function punyaAksesManual(User $user): bool

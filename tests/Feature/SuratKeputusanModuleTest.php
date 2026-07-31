@@ -54,7 +54,7 @@ class SuratKeputusanModuleTest extends TestCase
 
     public function test_sekretaris_dapat_membuat_dan_melihat_sk(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
 
         $this->actingAs($sekretaris)
@@ -118,7 +118,7 @@ class SuratKeputusanModuleTest extends TestCase
 
     public function test_lampiran_dan_foto_tersimpan_dan_terhubung_polimorfik(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
 
         $response = $this->actingAs($sekretaris)->post('/surat-keputusan', [
@@ -141,12 +141,12 @@ class SuratKeputusanModuleTest extends TestCase
         $this->assertSame('SK Asli (scan)', $lampiran->keterangan);
         $this->assertGreaterThan(0, $lampiran->ukuran_bytes);
         $this->assertSame($sekretaris->id, $lampiran->diunggah_oleh_id);
-        Storage::disk('public')->assertExists($lampiran->path);
+        Storage::disk('local')->assertExists($lampiran->path);
 
         $foto = $sk->fotoKegiatan()->first();
         $this->assertSame('Rapat pembahasan SK', $foto->caption);
         $this->assertSame($sekretaris->id, $foto->diunggah_oleh_id);
-        Storage::disk('public')->assertExists($foto->path);
+        Storage::disk('local')->assertExists($foto->path);
 
         $this->assertDatabaseHas('lampiran', [
             'lampirkan_type' => SuratKeputusan::class,
@@ -160,7 +160,7 @@ class SuratKeputusanModuleTest extends TestCase
 
     public function test_update_dapat_mengganti_metadata_dan_menghapus_lampiran(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
         $sk = SuratKeputusan::create($this->payloadSk(['dicatat_oleh_id' => $sekretaris->id]));
 
@@ -189,12 +189,12 @@ class SuratKeputusanModuleTest extends TestCase
 
     public function test_sekretaris_dapat_menghapus_sk_beserta_media(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
         $sk = SuratKeputusan::create($this->payloadSk(['dicatat_oleh_id' => $sekretaris->id]));
 
         $path = 'surat_keputusan/lampiran/hapus.pdf';
-        Storage::disk('public')->put($path, 'konten');
+        Storage::disk('local')->put($path, 'konten');
         $sk->lampiran()->create([
             'nama_file' => 'hapus.pdf',
             'path' => $path,
@@ -208,6 +208,118 @@ class SuratKeputusanModuleTest extends TestCase
 
         $this->assertDatabaseMissing('surat_keputusan', ['uuid' => $sk->uuid]);
         $this->assertDatabaseMissing('lampiran', ['lampirkan_id' => $sk->id]);
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk('local')->assertMissing($path);
+    }
+
+    public function test_media_diunduh_lewat_route_terotorisasi_bukan_file_public(): void
+    {
+        Storage::fake('local');
+        $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $sk = SuratKeputusan::create($this->payloadSk(['dicatat_oleh_id' => $sekretaris->id]));
+
+        $lampiran = Lampiran::create([
+            'lampirkan_type' => SuratKeputusan::class,
+            'lampirkan_id' => $sk->id,
+            'nama_file' => 'rahasia.pdf',
+            'path' => 'surat_keputusan/lampiran/rahasia.pdf',
+            'tipe_file' => 'pdf',
+            'diunggah_oleh_id' => $sekretaris->id,
+        ]);
+        Storage::disk('local')->put($lampiran->path, 'konten rahasia');
+
+        $user = $this->userDenganRole($this->unitLainRole);
+        $this->actingAs($user)
+            ->get(route('arsip-media.lampiran.download', $lampiran))
+            ->assertOk()
+            ->assertDownload('rahasia.pdf');
+
+        Storage::disk('public')->assertMissing($lampiran->path);
+
+        $this->actingAs($user)
+            ->get('/storage/'.$lampiran->path)
+            ->assertNotFound();
+    }
+
+    public function test_arsip_rahasia_tidak_dapat_dilihat_unit_lain_tanpa_akses_manual(): void
+    {
+        $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $sk = SuratKeputusan::create($this->payloadSk([
+            'dicatat_oleh_id' => $sekretaris->id,
+            'is_rahasia' => true,
+        ]));
+
+        $unitLain = $this->userDenganRole($this->unitLainRole);
+
+        $this->actingAs($unitLain)
+            ->get(route('surat-keputusan.show', $sk->uuid))
+            ->assertForbidden();
+    }
+
+    public function test_unit_lain_dengan_akses_manual_bisa_lihat_arsip_rahasia(): void
+    {
+        $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $sk = SuratKeputusan::create($this->payloadSk([
+            'dicatat_oleh_id' => $sekretaris->id,
+            'is_rahasia' => true,
+        ]));
+
+        $unitLain = $this->userDenganRole($this->unitLainRole);
+
+        $this->actingAs($sekretaris)
+            ->postJson('/arsip/surat-keputusan/' . $sk->uuid . '/akses', [
+                'user_id' => $unitLain->id,
+            ])
+            ->assertOk();
+
+        $this->actingAs($unitLain)
+            ->get(route('surat-keputusan.show', $sk->uuid))
+            ->assertOk();
+    }
+
+    public function test_pimpinan_dan_unit_lain_tidak_bisa_beri_akses_arsip(): void
+    {
+        $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $sk = SuratKeputusan::create($this->payloadSk([
+            'dicatat_oleh_id' => $sekretaris->id,
+            'is_rahasia' => true,
+        ]));
+
+        $pimpinan = $this->userDenganRole($this->pimpinanRole);
+        $unitLain = $this->userDenganRole($this->unitLainRole);
+        $userBaru = User::factory()->create(['role_id' => $this->unitLainRole->id]);
+
+        $this->actingAs($pimpinan)
+            ->postJson('/arsip/surat-keputusan/' . $sk->uuid . '/akses', [
+                'user_id' => $userBaru->id,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($unitLain)
+            ->postJson('/arsip/surat-keputusan/' . $sk->uuid . '/akses', [
+                'user_id' => $userBaru->id,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_update_mencatat_riwayat_perubahan_data(): void
+    {
+        Storage::fake('local');
+        $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $sk = SuratKeputusan::create($this->payloadSk(['dicatat_oleh_id' => $sekretaris->id]));
+
+        $this->actingAs($sekretaris)
+            ->put(route('surat-keputusan.update', $sk->uuid), $this->payloadSk([
+                'perihal' => 'Perihal Diperbarui',
+                'status' => 'tidak_berlaku',
+            ]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('riwayat_arsip', [
+            'arsipable_type' => SuratKeputusan::class,
+            'arsipable_id' => $sk->id,
+            'field' => 'perihal',
+        ]);
+
+        $this->assertSame(1, $sk->fresh()->riwayatArsip()->where('field', 'perihal')->count());
     }
 }

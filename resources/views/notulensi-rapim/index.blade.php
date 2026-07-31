@@ -58,7 +58,12 @@
                     <tbody>
                         @forelse($arsip as $item)
                         <tr>
-                            <td><a href="{{ route('notulensi-rapim.show', $item->uuid) }}">{{ $item->judul_rapat }}</a></td>
+                            <td>
+                                <a href="{{ route('notulensi-rapim.show', $item->uuid) }}">{{ $item->judul_rapat }}</a>
+                                @if($item->is_rahasia)
+                                <span class="badge badge-warning" style="vertical-align:middle;">Rahasia</span>
+                                @endif
+                            </td>
                             <td>{{ $item->tanggal->format('d/m/Y') }}</td>
                             <td class="text-center">{{ $item->lampiran_count }}</td>
                             <td class="text-center">{{ $item->foto_kegiatan_count }}</td>

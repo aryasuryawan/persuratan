@@ -146,7 +146,8 @@ class SuratMasukRestrictedAccessTest extends TestCase
         $surat = $this->createSurat($userLain);
         $this->forwardToPimpinan($surat, $userLain, $pimpinan);
         SuratAkses::create([
-            'surat_id' => $surat->id,
+            'aksesable_type' => SuratMasuk::class,
+            'aksesable_id' => $surat->id,
             'user_id' => $userLain->id,
             'level' => 'view',
             'diberikan_oleh_id' => $pimpinan->id,

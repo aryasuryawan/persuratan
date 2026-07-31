@@ -95,7 +95,7 @@ class NotulensiRapimModuleTest extends TestCase
 
     public function test_lampiran_dan_foto_tersimpan_terhubung_polimorfik(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
 
         $this->actingAs($sekretaris)
@@ -116,7 +116,7 @@ class NotulensiRapimModuleTest extends TestCase
 
         $lampiran = $rapim->lampiran()->first();
         $this->assertSame('daftar-hadir.docx', $lampiran->nama_file);
-        Storage::disk('public')->assertExists($lampiran->path);
+        Storage::disk('local')->assertExists($lampiran->path);
 
         $this->assertDatabaseHas('lampiran', [
             'lampirkan_type' => NotulensiRapim::class,

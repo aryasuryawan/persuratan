@@ -14,7 +14,19 @@ class KomitePersetujuanPolicy
 
     public function view(User $user, KomitePersetujuan $komite): bool
     {
-        return true;
+        if (! $komite->is_rahasia) {
+            return true;
+        }
+
+        if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
+            return true;
+        }
+
+        if ($user->hasRole('cc_security')) {
+            return false;
+        }
+
+        return $komite->punyaAksesManual($user);
     }
 
     public function create(User $user): bool
@@ -28,6 +40,11 @@ class KomitePersetujuanPolicy
     }
 
     public function delete(User $user, KomitePersetujuan $komite): bool
+    {
+        return in_array($user->role->kode, ['admin', 'sekretaris']);
+    }
+
+    public function assignAkses(User $user, KomitePersetujuan $komite): bool
     {
         return in_array($user->role->kode, ['admin', 'sekretaris']);
     }

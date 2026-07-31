@@ -14,6 +14,8 @@ class NotulensiRapimRequest extends ArsipFormRequest
         return array_merge([
             'judul_rapat' => ['required', 'string', 'max:255'],
             'tanggal' => ['required', 'date'],
+            'kategori' => ['nullable', 'string', 'max:255'],
+            'klasifikasi_id' => ['nullable', 'exists:klasifikasi,id'],
             'daftar_peserta' => ['nullable', 'string'],
             'ringkasan_pembahasan' => ['required', 'string'],
             'keputusan_arahan' => ['nullable', 'string'],

@@ -39,6 +39,24 @@
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kategori</label>
+                            <input type="text" name="kategori" class="form-control @error('kategori') is-invalid @enderror" value="{{ old('kategori', $rekaman->kategori ?? '') }}" placeholder="mis. Kepegawaian, Program, Anggaran">
+                            @error('kategori') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Klasifikasi</label>
+                            <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror">
+                                <option value="">— Pilih Klasifikasi —</option>
+                                @foreach(\App\Models\Klasifikasi::orderBy('nama')->get() as $klas)
+                                    <option value="{{ $klas->id }}" {{ old('klasifikasi_id', $rekaman->klasifikasi_id ?? '') == $klas->id ? 'selected' : '' }}>{{ $klas->nama }}</option>
+                                @endforeach
+                            </select>
+                            @error('klasifikasi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Daftar Peserta</label>
                         <textarea name="daftar_peserta" rows="3" class="form-control @error('daftar_peserta') is-invalid @enderror" placeholder="Satu nama per baris">{{ old('daftar_peserta', $rekaman->daftar_peserta ?? '') }}</textarea>
@@ -55,6 +73,13 @@
                         <label class="form-label">Keputusan / Arahan Pimpinan</label>
                         <textarea name="keputusan_arahan" rows="4" class="form-control @error('keputusan_arahan') is-invalid @enderror">{{ old('keputusan_arahan', $rekaman->keputusan_arahan ?? '') }}</textarea>
                         @error('keputusan_arahan') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-check form-switch">
+                            <input type="checkbox" name="is_rahasia" value="1" class="form-check-input" {{ old('is_rahasia', $rekaman->is_rahasia ?? false) ? 'checked' : '' }}>
+                            <span class="form-check-label">Rahasia — hanya admin, sekretaris, dan yang diberi akses yang dapat melihat</span>
+                        </label>
                     </div>
 
                     @include('arsip.partials._lampiran-input', ['rekaman' => $rekaman])
