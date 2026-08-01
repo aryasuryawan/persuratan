@@ -61,7 +61,10 @@ class PenerimaanSuratController extends Controller
         $organisasiList = \App\Models\OrganisasiPengirim::where('aktif', true)
             ->orderBy('nama')
             ->get();
-        return view('penerimaan-surat.create', compact('klasifikasi', 'organisasiList'));
+        $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
+            ->where('is_active', true)
+            ->get(['id', 'name', 'title']);
+        return view('penerimaan-surat.create', compact('klasifikasi', 'organisasiList', 'pimpinanList'));
     }
 
     public function store(Request $request)
@@ -73,6 +76,7 @@ class PenerimaanSuratController extends Controller
             'tanggal_surat' => 'nullable|date',
             'tanggal_diterima' => 'required|date',
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
+            'tujuan_pimpinan_id' => 'required|exists:users,id',
             'is_rahasia' => 'boolean',
             'notes' => 'nullable|string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -146,8 +150,11 @@ class PenerimaanSuratController extends Controller
         $organisasiList = \App\Models\OrganisasiPengirim::where('aktif', true)
             ->orderBy('nama')
             ->get();
+        $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
+            ->where('is_active', true)
+            ->get(['id', 'name', 'title']);
 
-        return view('penerimaan-surat.edit', compact('surat', 'klasifikasi', 'organisasiList'));
+        return view('penerimaan-surat.edit', compact('surat', 'klasifikasi', 'organisasiList', 'pimpinanList'));
     }
 
     public function update(Request $request, string $uuid, AksesKlasifikasiService $akses)
@@ -167,6 +174,7 @@ class PenerimaanSuratController extends Controller
             'tanggal_surat' => 'nullable|date',
             'tanggal_diterima' => 'required|date',
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
+            'tujuan_pimpinan_id' => 'required|exists:users,id',
             'is_rahasia' => 'boolean',
             'notes' => 'nullable|string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',

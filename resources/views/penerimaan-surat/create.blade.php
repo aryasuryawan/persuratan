@@ -47,6 +47,20 @@
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label required">Tujuan Pimpinan</label>
+                <select name="tujuan_pimpinan_id" class="form-select @error('tujuan_pimpinan_id') is-invalid @enderror" required>
+                    <option value="">-- Pilih Pimpinan --</option>
+                    @foreach($pimpinanList as $p)
+                    <option value="{{ $p->id }}" {{ old('tujuan_pimpinan_id') == $p->id ? 'selected' : '' }}>
+                        {{ $p->name }} @if($p->title) ({{ $p->title }}) @endif
+                    </option>
+                    @endforeach
+                </select>
+                <small class="form-hint">Pilih pimpinan yang dituju surat ini. Sekretaris akan disposisikan atas nama pimpinan ini.</small>
+                @error('tujuan_pimpinan_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Tanggal Surat</label>

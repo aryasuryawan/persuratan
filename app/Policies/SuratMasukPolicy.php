@@ -18,6 +18,16 @@ class SuratMasukPolicy
             return true;
         }
 
+        if ($user->hasRole('sekretaris')) {
+            return $suratMasuk->disposisi()->whereNotNull('atas_nama_pimpinan_id')->whereExists(function ($sub) use ($user) {
+                $sub->selectRaw(1)
+                    ->from('sekretaris_pimpinan as sp')
+                    ->whereRaw('sp.pimpinan_id = disposisi.atas_nama_pimpinan_id')
+                    ->where('sp.sekretaris_id', $user->id)
+                    ->where('sp.is_active', true);
+            })->exists();
+        }
+
         return $user->id === $suratMasuk->created_by;
     }
 
