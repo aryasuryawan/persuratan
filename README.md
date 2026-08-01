@@ -8,12 +8,13 @@ Aplikasi manajemen surat masuk & surat keluar berbasis web untuk Yayasan Dompet 
 - **Verifikasi Surat** — alur verifikasi oleh sekretaris sebelum diteruskan
 - **Disposisi** — disposisi ke unit pelaksana atau langsung pimpinan, catatan pimpinan, batas waktu, upload lampiran, proteksi submit ganda, **edit inline**, **hapus** (sekretaris/admin/pembuat), **cetak lembar disposisi** dengan Instruksi, Pelaksana, Batas waktu
 - **Follow Up Disposisi** — tindak lanjut berjenjang dari pelaksana dengan lampiran
-- **Riwayat Status & Timeline** — lacak pergerakan surat lengkap dengan siapa/kepada siapa, deadline, dan **tab Perubahan Data** (instruksi, pelaksana, catatan, deadline)
+- **Notifikasi Email Disposisi** — kirim email otomatis ke penerima disposisi (user aplikasi & freetext), konfigurasi **SMTP dinamis** (SMTP standar/phpMailer, MailerSend, SendGrid, Google Mail) via Pengaturan, uji koneksi, dan **log pengiriman email** yang dapat diaudit
+- **Riwayat Status & Timeline** — lacak pergerakan surat lengkap dengan siapa/kepada siapa, deadline, dan **tab Perubahan Data** (instruksi, pelaksana, catatan, deadline) serta **tab Notifikasi Email**
 - **Surat Keluar** — pencatatan dengan kode surat master, keterkaitan ke surat masuk (masuk ke menu **Arsip Lainnya**)
 - **Tracking** — pelacakan surat dengan grafik tren
 - **Dashboard** — statistik surat per status, tren masuk/keluar (Chart.js & ECharts)
 - **Master Data** — direktorat, divisi, departemen, klasifikasi, kode surat, role, pengguna, sekretaris-pimpinan
-- **Pengaturan** — nama aplikasi/lembaga, logo, favicon, alamat, kontak, footer
+- **Pengaturan** — nama aplikasi/lembaga, logo, favicon, alamat, kontak, footer, **Email/SMTP (notifikasi)** + **log pengiriman email**
 - **Manajemen Pengguna** — multi role, penempatan unit (direktorat/divisi/departemen), jabatan
 - **Level Akses Klasifikasi** — kontrol akses berdasarkan klasifikasi & sifat surat
 - **Modul Arsip Lainnya** — Surat Keputusan, Hasil Komite Persetujuan, Notulensi Rapim (metadata + lampiran + foto kegiatan, tanpa workflow approval)
@@ -82,6 +83,23 @@ php artisan serve
 4. `php artisan config:clear`
 5. Tombol "Login dengan Google" muncul di halaman login (hanya jika `GOOGLE_CLIENT_ID` diisi)
 
+## Notifikasi Email Setup
+
+Konfigurasi SMTP **tidak** di `.env` — dikelola via UI di **Master Data → Pengaturan → tab Email/SMTP** (disimpan di tabel `settings`, key `smtp_*`):
+
+1. Centang **"Aktifkan Email Notifikasi"**
+2. Pilih **Driver**:
+   - `smtp` — SMTP standar / phpMailer (host, port, username, password, enkripsi)
+   - `mailersend` — API key (`smtp.mailersend.net`, API key = username+password)
+   - `sendgrid` — API key (`smtp.sendgrid.net`, username `apikey`)
+   - `gmail` — App Password (`smtp.gmail.com:587` TLS)
+3. Isi **Dari Alamat / Dari Nama**
+4. **Simpan** → **Test Koneksi & Kirim Email Uji**
+
+Log pengiriman tersimpan di tabel `email_notification_logs` (status `sent`/`failed` + pesan error), bisa dilihat di **Pengaturan → tab Log Pengiriman Email** dan **History Surat → tab Notifikasi Email**.
+
+> Semua provider memakai transport SMTP native Laravel — tidak ada package driver tambahan. Untuk Gmail wajib **App Password** (2FA aktif).
+
 ## Akun Default (Seeder)
 
 | Role | Email | Password |
@@ -135,7 +153,7 @@ app/
   Http/Controllers/   # Controller (termasuk Master/)
   Listeners/          # Listener pencatatan riwayat
   Models/             # Model Eloquent
-  Services/           # ArsipMediaService, AksesKlasifikasiService, SuratScopeService
+  Services/           # ArsipMediaService, AksesKlasifikasiService, SuratScopeService, EmailService
 database/
   migrations/         # Skema database
   seeders/            # Seeder data awal & contoh

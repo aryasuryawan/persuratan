@@ -332,7 +332,11 @@ class PenerimaanSuratController extends Controller
             })->exists())
         );
 
-        return view('penerimaan-surat.show', compact('surat', 'canManageAkses'));
+        return view('penerimaan-surat.show', compact('surat', 'canManageAkses'))
+            ->with('emailLogs', \App\Models\EmailNotificationLog::where('type', 'disposisi')
+                ->whereIn('reference_id', $surat->disposisi()->pluck('id'))
+                ->latest('created_at')
+                ->get());
     }
 
     public function cetakDisposisi(string $uuid, AksesKlasifikasiService $akses)

@@ -18,6 +18,8 @@ Sistem Manajemen Surat Elektronik — Yayasan Dompet Dhuafa Republika
 9. [Tracking](#9-tracking)
 10. [Arsip Lainnya](#10-arsip-lainnya)
 11. [Pengaturan & Master Data](#11-pengaturan--master-data)
+    - [11.1 Pengaturan Email / SMTP (Notifikasi)](#111-pengaturan-email--smtp-notifikasi)
+    - [11.2 Log Pengiriman Email](#112-log-pengiriman-email)
 12. [Manajemen Pengguna](#12-manajemen-pengguna)
 13. [Login Google](#13-login-google)
 14. [Tips & Troubleshooting](#14-tips--troubleshooting)
@@ -107,6 +109,12 @@ Setelah login, Anda diarahkan ke Dashboard. Tampilkan:
 
 > Proteksi submit ganda: tombol Simpan hanya bisa diklik sekali per buka modal.
 
+> **Notifikasi Email:** Saat disposisi disimpan, sistem otomatis mengirim email notifikasi ke setiap penerima.
+> - **Penerima user aplikasi** → email diambil otomatis dari data user (tidak perlu diisi).
+> - **Penerima nama/jabatan bebas (freetext)** → **wajib isi email** di kolom yang tersedia agar notifikasi terkirim. Tanpa email, nama tsb tetap tercatat sebagai penerima tapi email tidak dikirim.
+> - Log pengiriman bisa dicek di **History Surat → tab Notifikasi Email** atau **Pengaturan → Log Pengiriman Email**.
+> - Email hanya terkirim jika admin sudah mengaktifkan & mengonfigurasi SMTP (lihat §11.1).
+
 ### Edit Disposisi
 - Di daftar disposisi (detail surat), klik **ikon pensil** (edit) pada baris disposisi
 - Form edit inline terbuka: ubah Instruksi, Catatan, Deadline
@@ -166,6 +174,11 @@ Di detail surat (bagian bawah), klik **History Surat** untuk expand:
 - Log perubahan field: Instruksi, Pelaksana, Catatan, Deadline
 - Format: **Field: nilai lama → nilai baru**, siapa mengubah, kapan
 
+### Tab Notifikasi Email
+- Timeline pengiriman email notifikasi disposisi untuk surat ini
+- Tampil: nama & alamat email penerima, subjek, status (**Terkirim**/**Gagal**), penyedia email, waktu
+- Jika gagal: pesan error tampil (mis. konfigurasi SMTP salah, email penerima tidak valid)
+
 ---
 
 ## 8. Surat Keluar
@@ -215,6 +228,30 @@ Menu dropdown **Arsip Lainnya** (ikon arsip di navbar):
 ### Pengaturan Aplikasi
 - Menu **Master Data** → **Pengaturan**
 - Nama Aplikasi, Nama Lembaga, Logo, Favicon, Alamat, Telepon, Email, Website, Footer
+
+### 11.1 Pengaturan Email / SMTP (Notifikasi)
+
+*Akses: **Admin** saja. Menu **Master Data** → **Pengaturan** → tab **Email / SMTP**.*
+
+1. Centang **"Aktifkan Email Notifikasi"**.
+2. Pilih **Driver / Penyedia Email**:
+   | Provider | Yang Diisi |
+   |---|---|
+   | **SMTP Standar / PHP Mailer** | Host, Port, Username, Password, Enkripsi |
+   | **MailerSend** | API Key (`mlsn.…`); host otomatis `smtp.mailersend.net` |
+   | **SendGrid** | API Key (`SG.…`); host otomatis `smtp.sendgrid.net` |
+   | **Google Mail (Gmail/Workspace)** | Email + **App Password** (bukan password biasa); host otomatis `smtp.gmail.com` |
+3. Isi **Dari Alamat** & **Dari Nama** (identitas pengirim).
+4. Klik **Simpan Pengaturan Email**.
+5. Klik **Test Koneksi & Kirim Email Uji** untuk memastikan konfigurasi benar (email uji dikirim ke alamat username/from).
+
+> **Catatan Gmail:** Aktifkan 2-Step Verification di akun Google → buat **App Password** (Google Account → Security → App Passwords) → gunakan 16 karakter app password tsb sebagai password SMTP. Untuk akun Workspace, izinkan "Less secure app" atau gunakan SMTP relay bila ada kendala.
+
+### 11.2 Log Pengiriman Email
+
+- Menu **Master Data** → **Pengaturan** → tab **Log Pengiriman Email**
+- Menampilkan seluruh riwayat pengiriman: waktu, jenis (Disposisi), penerima, email, subjek, status (Terkirim/Gagal/Pending)
+- Log gagal menampilkan pesan error (hover/klik tombol **Error**)
 
 ### Master Data
 | Menu | Fungsi |
@@ -287,6 +324,11 @@ Menu **Master Data** → **Pengguna**:
 | File lampiran tidak upload | Cek ukuran (maks 10MB/file), tipe file (pdf/jpg/jpeg/png), permission `storage/app/public` writable |
 | Tab "Perubahan Data" tidak bisa diklik | Hard refresh browser (`Ctrl+Shift+R`) — script `switchHistTab` perlu load ulang |
 | Disposisi tidak tersimpan | Pastikan pilih **Jenis Disposisi** dulu (radio), baru isi field lain. Instruksi minimal 1 centang. |
+| Email notifikasi tidak terkirim | Cek **Pengaturan → Email/SMTP**: apakah "Aktifkan Email Notifikasi" dicentang & config SMTP benar. Gunakan **Test Koneksi**. Cek tab **Log Pengiriman Email** untuk pesan error. |
+| Email uji gagal "Authentication failed" | Username/password SMTP salah. Gmail: gunakan **App Password** bukan password biasa. SendGrid: username `apikey`. MailerSend: API key sebagai username & password. |
+| Email uji gagal "Connection could not be established" | Salah host/port. Verifikasi host (mis. `smtp.gmail.com`), port (587 TLS / 465 SSL), dan pastikan server boleh keluar port SMTP (firewall/hosting). |
+| Email masuk ke spam | Tambahkan SPF/DKIM/DMARC dari penyedia (MailerSend, SendGrid, Google Workspace) untuk domain pengirim. |
+| Penerima freetext tidak dapat email | Kolom email penerima kosong saat membuat disposisi — isi email agar terkirim. |
 | Cetak disposisi kosong | Buat disposisi baru setelah update terbaru (data lama kolom `instruksi`/`pelaksana` kosong) |
 | Error 500 saat migrasi | Cek `php artisan migrate:status`, pastikan DB connection benar, cek `php artisan migrate` manual |
 

@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('sekretaris-pimpinan', SekretarisPimpinanController::class)->except(['edit', 'update']);
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/test-smtp', [SettingController::class, 'testSmtp'])->name('settings.test-smtp');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

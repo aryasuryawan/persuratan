@@ -86,6 +86,12 @@
                                 <div class="datagrid-title">Klasifikasi</div>
                                 <div class="datagrid-value"><span class="badge {{ $isRestricted ? 'badge-dark' : 'badge-muted' }}">@if($isRestricted)<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>@endif{{ $surat->klasifikasi->nama }}</span></div>
                             </div>
+                            @if($surat->tujuanPimpinan)
+                            <div class="datagrid-item">
+                                <div class="datagrid-title">Tujuan Pimpinan</div>
+                                <div class="datagrid-value">{{ $surat->tujuanPimpinan->name }} @if($surat->tujuanPimpinan->title ?? $surat->tujuanPimpinan->jabatan) ({{ $surat->tujuanPimpinan->title ?? $surat->tujuanPimpinan->jabatan }}) @endif</div>
+                            </div>
+                            @endif
                             @if($surat->notes)
                             <div class="datagrid-item span-2">
                                 <div class="datagrid-title">Catatan</div>
@@ -159,6 +165,13 @@
                                 <div class="collapse" id="disposisi-edit-{{ $d->id }}">
                                     <form method="POST" action="{{ route('disposisi.update', $d) }}" enctype="multipart/form-data" class="mt-2">
                                         @csrf @method('PUT')
+                                        @if($errors->any())
+                                        <div class="alert alert-danger alert-sm py-2 mb-2">
+                                            @foreach($errors->all() as $err)
+                                            <div>{{ $err }}</div>
+                                            @endforeach
+                                        </div>
+                                        @endif
                                         <div class="mb-2">
                                             <label class="form-label small">Instruksi</label>
                                             <div class="form-checklist">
@@ -174,21 +187,43 @@
                                         </div>
                                         <div class="mb-2">
                                             <label class="form-label small">Disposisi kepada</label>
+                                            @php
+                                                $disposisiKepada = $d->disposisi_kepada ?? [];
+                                                $userNames = \App\Models\User::where('is_active', true)->pluck('name')->toArray();
+                                                $selectedUsers = array_intersect($disposisiKepada, $userNames);
+                                                $freeTexts = array_values(array_diff($disposisiKepada, $userNames));
+                                                $parseFree = function ($v) {
+                                                    if (preg_match('/^(.+)\s*<([^>]+)>$/', $v, $m)) {
+                                                        return ['name' => trim($m[1]), 'email' => trim($m[2])];
+                                                    }
+                                                    return ['name' => $v, 'email' => ''];
+                                                };
+                                            @endphp
                                             <select name="disposisi_kepada[]" class="form-select form-select-sm" multiple>
                                                 @foreach(\App\Models\User::where('is_active', true)->get() as $u)
-                                                <option value="{{ $u->name }}" {{ in_array($u->name, $d->disposisi_kepada ?? []) ? 'selected' : '' }}>
+                                                <option value="{{ $u->name }}" {{ in_array($u->name, $selectedUsers) ? 'selected' : '' }}>
                                                     {{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif
                                                 </option>
                                                 @endforeach
                                             </select>
                                             <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user.</small>
                                             <div class="mt-1">
-                                                <label class="form-label small">Tambah nama/jabatan bebas</label>
+                                                <label class="form-label small">Tambah nama/jabatan bebas <span class="text-muted">(email wajib agar notifikasi terkirim)</span></label>
                                                 <div class="input-group input-group-sm">
-                                                    <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Contoh: Divisi Keuangan, Bagian Umum">
+                                                    <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama">
+                                                    <input type="email" name="disposisi_kepada_free_email[]" class="form-control" placeholder="Email (wajib)" style="max-width:220px;">
                                                     <button type="button" class="btn btn-outline-secondary" id="btn-add-disposisi-free-edit-{{ $d->id }}">Tambah</button>
                                                 </div>
-                                                <div id="disposisi-free-list-edit-{{ $d->id }}" class="mt-1"></div>
+                                                <div id="disposisi-free-list-edit-{{ $d->id }}" class="mt-1">
+                                                    @foreach($freeTexts as $text)
+                                                    @php $parsed = $parseFree($text); @endphp
+                                                    <div class="input-group input-group-sm mt-1">
+                                                        <input type="text" name="disposisi_kepada_free[]" class="form-control" value="{{ $parsed['name'] }}">
+                                                        <input type="email" name="disposisi_kepada_free_email[]" class="form-control" value="{{ $parsed['email'] }}" placeholder="Email (wajib)" style="max-width:220px;">
+                                                        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.input-group').remove()">Hapus</button>
+                                                    </div>
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="mb-2">
@@ -222,6 +257,16 @@
                                             {{ $d->kepadaUser->departemen?->nama ?? '-' }})
                                         </span>
                                         @endif
+                                    </span>
+                                    @endif
+                                    @if($d->disposisi_kepada)
+                                    <span style="margin-left:8px;">
+                                        Disposisi kepada: <b>{{ implode(', ', $d->disposisi_kepada) }}</b>
+                                    </span>
+                                    @endif
+                                    @if($d->instruksi)
+                                    <span style="margin-left:8px;">
+                                        Instruksi: <b>{{ implode(', ', $d->instruksi) }}</b>
                                     </span>
                                     @endif
                                     @if($d->tanggal_deadline)
@@ -368,6 +413,7 @@
                         <div class="tabs">
                             <a class="tab active" href="#hist-status" data-tab="hist-status" onclick="event.preventDefault(); switchHistTab('hist-status');">Status <span class="count">{{ $surat->riwayatStatus->count() }}</span></a>
                             <a class="tab" href="#hist-data" data-tab="hist-data" onclick="event.preventDefault(); switchHistTab('hist-data');">Perubahan Data <span class="count">{{ $surat->riwayatPerubahanData->count() }}</span></a>
+                            <a class="tab" href="#hist-email" data-tab="hist-email" onclick="event.preventDefault(); switchHistTab('hist-email');">Notifikasi Email <span class="count">{{ $emailLogs->count() ?? 0 }}</span></a>
                         </div>
                         <div style="height:8px;"></div>
 
@@ -392,6 +438,11 @@
                                         @if($r->disposisi->kepadaUser->direktorat || $r->disposisi->kepadaUser->divisi || $r->disposisi->kepadaUser->departemen)
                                         <span style="color:var(--faint);">({{ $r->disposisi->kepadaUser->direktorat?->nama ?? '-' }} / {{ $r->disposisi->kepadaUser->divisi?->nama ?? '-' }} / {{ $r->disposisi->kepadaUser->departemen?->nama ?? '-' }})</span>
                                         @endif
+                                        @endif
+                                        @if($r->disposisi?->disposisi_kepada)
+                                        <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+                                            Disposisi kepada: {{ implode(', ', $r->disposisi->disposisi_kepada) }}
+                                        </div>
                                         @endif
                                         @if($r->disposisi?->tanggal_deadline)
                                         . Deadline <b>{{ $r->disposisi->tanggal_deadline->format('d/m/Y') }}</b>
@@ -418,6 +469,11 @@
                                         @if($p->disposisi?->kepadaUser)
                                         &rarr; Disposisi #{{ $p->disposisi->id }} ke <b>{{ $p->disposisi->kepadaUser->name }}</b>
                                         @endif
+                                        @if($p->disposisi?->disposisi_kepada)
+                                        <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+                                            Disposisi kepada: {{ implode(', ', $p->disposisi->disposisi_kepada) }}
+                                        </div>
+                                        @endif
                                         @if($p->perubahan)
                                         <ul style="margin:6px 0 0; padding-left:16px;">
                                             @foreach($p->perubahan as $item)
@@ -437,6 +493,43 @@
                             <p style="color:var(--muted); margin:0;">Belum ada perubahan data.</p>
                             @endforelse
                         </div>
+
+                        <div class="tl" id="hist-email" style="display:none;">
+                            @forelse($emailLogs as $log)
+                            @php
+                                $ok = $log->status === 'sent';
+                            @endphp
+                            <div class="tl-item">
+                                <div class="tl-dot {{ $ok ? 'done' : '' }}">
+                                    @if($ok)<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    @else<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:9px;height:9px;color:var(--danger);"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    @endif
+                                </div>
+                                <div class="tl-card" @if(!$ok) style="border-color:var(--danger);" @endif>
+                                    <div class="tl-head">
+                                        <span class="tl-title">{{ $log->recipient_name }} &lt;{{ $log->recipient_email }}&gt;</span>
+                                        <span class="tl-when">{{ $log->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <div class="tl-body">
+                                        @if($ok)
+                                        <span class="badge" style="background:var(--success-light, #e6f7ef); color:var(--success);">Terkirim</span>
+                                        @else
+                                        <span class="badge" style="background:var(--danger-light, #fdecec); color:var(--danger);">Gagal</span>
+                                        @endif
+                                        <span style="color:var(--muted);">Subjek: "{{ $log->subject }}"</span>
+                                        @if($log->mailer_used)
+                                        <span style="color:var(--faint);"> · via {{ $log->mailer_used }}</span>
+                                        @endif
+                                        @if(!$ok && $log->error_message)
+                                        <div style="font-size:12px; color:var(--danger); margin-top:4px;">{{ $log->error_message }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p style="color:var(--muted); margin:0;">Belum ada notifikasi email.</p>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
                 <script>
@@ -446,6 +539,7 @@
                         });
                         document.getElementById('hist-status').style.display = (id === 'hist-status') ? '' : 'none';
                         document.getElementById('hist-data').style.display = (id === 'hist-data') ? '' : 'none';
+                        document.getElementById('hist-email').style.display = (id === 'hist-email') ? '' : 'none';
                     }
                 </script>
                 @endcan
@@ -653,11 +747,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', function() {
                     const div = document.createElement('div');
                     div.className = 'input-group input-group-sm mt-1';
-                    div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama/jabatan bebas">' +
+                    div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama">' +
+                        '<input type="email" name="disposisi_kepada_free_email[]" class="form-control" placeholder="Email (wajib)" style="max-width:220px;">' +
                         '<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.input-group\').remove()">Hapus</button>';
                     list.appendChild(div);
                 });
             });
         });
-    </script>
+
+        // Auto-open collapse from URL fragment after update
+        if (window.location.hash) {
+            const target = document.querySelector(window.location.hash);
+            if (target && target.classList.contains('collapse')) {
+                new bootstrap.Collapse(target, { show: true });
+            }
+        }
+    });
+</script>
 @endcan

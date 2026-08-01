@@ -33,7 +33,10 @@ class Setting extends Model
 
     public static function set(string $key, ?string $value): void
     {
-        Setting::where('key', $key)->update(['value' => $value]);
+        Setting::updateOrCreate(
+            ['key' => $key],
+            ['label' => ucwords(str_replace('_', ' ', $key)), 'value' => $value]
+        );
         Cache::forget("setting_{$key}");
     }
 }

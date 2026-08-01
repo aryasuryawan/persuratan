@@ -653,4 +653,97 @@ Semua arsitektur backend, business logic, dan database tetap sama:
 
 ---
 
-*Dokumen ini adalah revisi dari v4: mengganti frontend template dari AdminLTE 4 ke Tabler, menyesuaikan konvensi CSS/JS/HTML ke sistem Tabler (page-wrapper, navbar-vertical, card, badge, timeline, modal), mengganti Tabulator dengan fetch native + tabel Tabler, dan mengganti ikon Font Awesome dengan Tabler Icons. Semua backend, database, dan business logic tidak berubah dari v4.*
+## 8. Notifikasi Email Disposisi
+
+> **Tambahan v5 (inkremen):** notifikasi email otomatis ke penerima disposisi, dengan konfigurasi SMTP dinamis dari halaman Pengaturan dan log pengiriman yang dapat diaudit. Diimplementasikan setelah rilis Tabler v5.
+
+### 8.1 Alur Kirim Email
+
+1. User membuat disposisi (modal/form) atau memindahkan disposisi (`pindah`).
+2. `BuatDisposisi` (action) menyelesaikan pembuatan disposisi + status surat, lalu memanggil `EmailService`.
+3. `EmailService` membangun daftar penerima:
+   - **Penerima user aplikasi** → email diambil otomatis dari tabel `users.email`.
+   - **Penerima freetext** → email diambil dari format `Nama <email>` pada field `disposisi_kepada` (disimpan sebagai array JSON). Freetext tanpa email **tidak** dikirim.
+4. Email HTML dikirim (subject + body berisi detail surat & disposisi, tautan ke detail surat).
+5. Setiap percobaan tercatat di `email_notification_logs` dengan status `sent`/`failed`.
+
+### 8.2 Konfigurasi SMTP Dinamis
+
+Konfigurasi **tidak** dibaca dari `.env` (Laravel default) melainkan dari tabel `settings` (key prefix `smtp_*`), sehingga admin bisa mengubahnya via UI tanpa deploy. Driver didukung:
+
+| Driver | Deskripsi | Default Host / Port |
+|---|---|---|
+| `smtp` | SMTP standar / PHP Mailer (sembarang provider) | sesuai isian |
+| `mailersend` | MailerSend | `smtp.mailersend.net` : 587 (API key dipakai sebagai username+password) |
+| `sendgrid` | SendGrid | `smtp.sendgrid.net` : 587 (username `apikey`, password = API key) |
+| `gmail` | Google Mail (Gmail/Workspace) via App Password | `smtp.gmail.com` : 587 TLS |
+
+Semua driver memakai **transport SMTP native Laravel** — tidak memerlukan package driver tambahan (MailerSend/SendGrid/Gmail semuanya mendukung SMTP). `EmailService::createMailer()` membuat mailer dinamis per-konfigurasi (nama mailer unik via `md5(serialize(config))`), lalu `Mail::mailer(...)->html(...)`.
+
+Field settings yang digunakan:
+
+```
+smtp_enabled          smtp_driver           smtp_host
+smtp_port             smtp_username         smtp_password
+smtp_encryption       smtp_from_address     smtp_from_name
+mailersend_api_key    sendgrid_api_key
+gmail_client_id       gmail_client_secret   gmail_refresh_token  (OAuth opsional, fallback App Password)
+```
+
+### 8.3 Tabel `email_notification_logs`
+
+```php
+Schema::create('email_notification_logs', function (Blueprint $table) {
+    $table->id();
+    $table->string('uuid')->unique();
+    $table->string('type');                 // 'disposisi', 'general'
+    $table->unsignedBigInteger('reference_id')->nullable();  // disposisi_id
+    $table->string('recipient_type');       // 'user' | 'freetext'
+    $table->unsignedBigInteger('recipient_user_id')->nullable();
+    $table->string('recipient_name');
+    $table->string('recipient_email');
+    $table->string('subject');
+    $table->text('body')->nullable();
+    $table->string('status');               // 'pending' | 'sent' | 'failed'
+    $table->text('error_message')->nullable();
+    $table->string('mailer_used')->nullable();
+    $table->timestamp('sent_at')->nullable();
+    $table->timestamps();
+    // indexes: [type, reference_id], recipient_user_id, status, created_at
+});
+```
+
+### 8.4 Service & Komponen
+
+| Komponen | Lokasi | Tanggung Jawab |
+|---|---|---|
+| `EmailService` | `app/Services/EmailService.php` | `send()`, `sendToMultiple()`, `createMailer()` (SMTP dinamis), `testConnection()` |
+| `EmailNotificationLog` | `app/Models/EmailNotificationLog.php` | Model log, scope `sent`/`failed` |
+| `BuatDisposisi` | `app/Actions/BuatDisposisi.php` | Kirim notifikasi ke semua penerima setelah disposisi dibuat |
+| `DisposisiController@pindah` | `app/Http/Controllers/DisposisiController.php` | Kirim notifikasi ke pelaksana baru |
+| `SettingController@index/update/testSmtp` | `app/Http/Controllers/Master/SettingController.php` | UI konfigurasi + uji koneksi |
+
+### 8.5 Endpoint
+
+| Method | Route | Fungsi |
+|---|---|---|
+| `POST` | `master/settings/test-smtp` | Uji koneksi SMTP + kirim email uji (JSON) |
+| `GET` | `master/settings` | Pengaturan (tab Email/SMTP + tab Log pengiriman) |
+
+### 8.6 UI
+
+- **Pengaturan → tab Email/SMTP**: toggle aktif, dropdown driver, form per driver (smtp host/port/user/pass, MailerSend/SendGrid API key, Gmail app password), dari alamat/nama, tombol **Test Koneksi & Kirim Email Uji**.
+- **Pengaturan → tab Log Pengiriman Email**: tabel log (waktu, jenis, penerima, email, subjek, status) + popover pesan error untuk log gagal.
+- **Form disposisi (modal & edit)**: penerima freetext kini punya kolom email wajib. Disimpan sebagai `Nama <email>` di `disposisi_kepada`.
+- **History Surat → tab Notifikasi Email**: timeline status terkirim/gagal per surat (diambil dari log `type=disposisi` untuk disposisi milik surat tsb).
+
+### 8.7 Catatan Operasional
+
+- Email **nonaktif** secara default (`smtp_enabled = 0`). Aktivasi via Pengaturan.
+- Untuk Gmail wajib **App Password** (2FA aktif). App password 16 karakter.
+- Kegagalan kirim tidak menggagalkan pembuatan disposisi — error tercatat di log (best-effort).
+- `Setting::set()` kini `updateOrCreate`, sehingga key baru otomatis dibuat saat disimpan.
+
+---
+
+*Dokumen ini adalah revisi dari v4: mengganti frontend template dari AdminLTE 4 ke Tabler, menyesuaikan konvensi CSS/JS/HTML ke sistem Tabler (page-wrapper, navbar-vertical, card, badge, timeline, modal), mengganti Tabulator dengan fetch native + tabel Tabler, dan mengganti ikon Font Awesome dengan Tabler Icons. Semua backend, database, dan business logic tidak berubah dari v4 — ditambah modul **Notifikasi Email Disposisi** (§8).*

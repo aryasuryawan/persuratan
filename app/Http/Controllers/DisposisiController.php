@@ -8,6 +8,7 @@ use App\Models\RiwayatPerubahanData;
 use App\Models\RiwayatStatus;
 use App\Models\SuratMasuk;
 use App\Models\User;
+use App\Services\EmailService;
 use App\Services\SuratScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,6 @@ class DisposisiController extends Controller
             'surat_masuk_id' => 'required|exists:surat_masuk,id',
             'jenis' => 'required|in:ke_pelaksana,langsung_pimpinan',
             'atas_nama_pimpinan_id' => 'nullable|exists:users,id',
-            'pelaksana_id' => 'nullable|exists:users,id',
             'catatan' => 'nullable|string',
             'catatan_pimpinan' => 'nullable|string',
             'tanggal_deadline' => 'nullable|date',
@@ -52,16 +52,43 @@ class DisposisiController extends Controller
             'disposisi_kepada' => 'nullable|array',
             'disposisi_kepada.*' => 'string',
             'disposisi_kepada_free' => 'nullable|array',
-            'disposisi_kepada_free.*' => 'string',
+            'disposisi_kepada_free.*' => 'nullable|string',
+            'disposisi_kepada_free_email' => 'nullable|array',
+            'disposisi_kepada_free_email.*' => 'nullable|email',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        // Merge selected users + free text input
+        // Validasi: ke_pelaksana butuh minimal 1 user di disposisi_kepada
+        if ($data['jenis'] === 'ke_pelaksana' && empty($data['disposisi_kepada'])) {
+            return back()->withErrors(['disposisi_kepada' => 'Minimal pilih 1 pelaksana untuk jenis "Ke Pelaksana".'])->withInput();
+        }
+
+        // Merge freetext recipients (name + optional email) into disposisi_kepada
+        $freeTexts = [];
+        foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
+            if ($name === null || trim($name) === '') {
+                continue;
+            }
+            $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
+            $freeTexts[] = $email !== '' ? trim($name) . ' <' . $email . '>' : trim($name);
+        }
         $disposisiKepada = array_merge(
             $data['disposisi_kepada'] ?? [],
-            array_filter($data['disposisi_kepada_free'] ?? [])
+            $freeTexts
         );
         $data['disposisi_kepada'] = $disposisiKepada;
+
+        // Tentukan pelaksana (kepada_user_id) dari user pertama di disposisi_kepada yang ada di tabel users
+        $pelaksanaUser = null;
+        if ($data['jenis'] === 'ke_pelaksana' && !empty($disposisiKepada)) {
+            $userNames = User::where('is_active', true)->pluck('id', 'name')->toArray();
+            foreach ($disposisiKepada as $item) {
+                if (isset($userNames[$item])) {
+                    $pelaksanaUser = User::find($userNames[$item]);
+                    break;
+                }
+            }
+        }
 
         $surat = SuratMasuk::with('status')->findOrFail($data['surat_masuk_id']);
         $user = Auth::user();
@@ -76,7 +103,7 @@ class DisposisiController extends Controller
             dariUser: $user,
             jenis: $data['jenis'],
             atasNamaPimpinan: ($data['atas_nama_pimpinan_id'] ?? null) ? User::find($data['atas_nama_pimpinan_id']) : null,
-            kepadaUser: ($data['pelaksana_id'] ?? null) ? User::find($data['pelaksana_id']) : null,
+            kepadaUser: $pelaksanaUser,
             catatan: $data['catatan'] ?? null,
             catatanPimpinan: $data['catatan_pimpinan'] ?? null,
             tanggalDeadline: $data['tanggal_deadline'] ?? null,
@@ -161,6 +188,32 @@ class DisposisiController extends Controller
             ]);
         }
 
+        $emailInstruksi = $baru->instruksi ? implode(', ', $baru->instruksi) : '-';
+        $emailCatatan = nl2br(e($data['catatan'] ?? '-'));
+        $emailDeadline = $baru->tanggal_deadline ? $baru->tanggal_deadline->format('d/m/Y') : '-';
+        $emailPerihal = $surat->perihal;
+        $emailAgenda = $surat->nomor_agenda;
+        $emailUrl = route('penerimaan-surat.show', $surat->uuid);
+
+        if ($baru->kepadaUser?->email) {
+            app(EmailService::class)->send(
+                $baru->kepadaUser->email,
+                "Disposisi Dipindahkan: {$emailAgenda} - {$emailPerihal}",
+                "Disposisi surat <strong>{$emailPerihal}</strong> (No. Agenda: {$emailAgenda}) dipindahkan dari <strong>{$dariNama}</strong> kepada Anda.<br><br>" .
+                "Instruksi: {$emailInstruksi}<br>" .
+                "Catatan: {$emailCatatan}<br>" .
+                "Batas Waktu: {$emailDeadline}<br><br>" .
+                "<a href=\"{$emailUrl}\" style=\"display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;\">Lihat Detail Surat</a>",
+                [
+                    'type' => 'disposisi',
+                    'reference_id' => $baru->id,
+                    'recipient_type' => 'user',
+                    'recipient_user_id' => $baru->kepada_user_id,
+                    'recipient_name' => $baru->kepadaUser->name,
+                ]
+            );
+        }
+
         return back()->with('success', 'Disposisi berhasil dipindahkan ke ' . $kepadaNama . '.');
     }
 
@@ -184,13 +237,23 @@ class DisposisiController extends Controller
             'disposisi_kepada' => 'nullable|array',
             'disposisi_kepada.*' => 'string',
             'disposisi_kepada_free' => 'nullable|array',
-            'disposisi_kepada_free.*' => 'string',
+            'disposisi_kepada_free.*' => 'nullable|string',
+            'disposisi_kepada_free_email' => 'nullable|array',
+            'disposisi_kepada_free_email.*' => 'nullable|email',
         ]);
 
-        // Merge selected users + free text input
+        // Merge freetext recipients (name + optional email) into disposisi_kepada
+        $freeTexts = [];
+        foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
+            if ($name === null || trim($name) === '') {
+                continue;
+            }
+            $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
+            $freeTexts[] = $email !== '' ? trim($name) . ' <' . $email . '>' : trim($name);
+        }
         $disposisiKepada = array_merge(
             $data['disposisi_kepada'] ?? [],
-            array_filter($data['disposisi_kepada_free'] ?? [])
+            $freeTexts
         );
         $data['disposisi_kepada'] = $disposisiKepada;
 
@@ -247,7 +310,7 @@ class DisposisiController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Disposisi berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Disposisi berhasil diperbarui.')->withFragment('disposisi-edit-' . $disposisi->id);
     }
 
     public function destroy(Request $request, Disposisi $disposisi)

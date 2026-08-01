@@ -35,7 +35,7 @@
                         <label class="form-label required">Jenis Disposisi</label>
                         <div class="form-selectgroup">
                             <label class="form-selectgroup-item">
-                                <input type="radio" name="jenis" value="ke_pelaksana" class="form-selectgroup-input" id="jenis-pelaksana">
+                                <input type="radio" name="jenis" value="ke_pelaksana" class="form-selectgroup-input" id="jenis-pelaksana" checked>
                                 <span class="form-selectgroup-label">Ke Pelaksana</span>
                             </label>
                             <label class="form-selectgroup-item">
@@ -58,48 +58,38 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Disposisi kepada</label>
-                        <select name="disposisi_kepada[]" class="form-select" multiple>
+                        <label class="form-label{{ $errors->has('disposisi_kepada') ? ' required' : '' }}">Disposisi kepada</label>
+                        <select name="disposisi_kepada[]" class="form-select" multiple id="disposisi-kepada-select">
                             @foreach(\App\Models\User::where('is_active', true)->get() as $u)
                             <option value="{{ $u->name }}">{{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif</option>
                             @endforeach
                         </select>
-                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user. Tambah nama/jabatan bebas di bawah.</small>
+                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user. User pertama = pelaksana utama. Tambah nama/jabatan bebas di bawah.</small>
                         <div class="mt-2">
-                            <label class="form-label small">Tambah nama/jabatan bebas</label>
+                            <label class="form-label small">Tambah nama/jabatan bebas <span class="text-muted">(email wajib agar notifikasi terkirim)</span></label>
                             <div class="input-group input-group-sm">
-                                <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Contoh: Divisi Keuangan, Bagian Umum">
+                                <input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama (contoh: Divisi Keuangan)">
+                                <input type="email" name="disposisi_kepada_free_email[]" class="form-control" placeholder="Email (wajib)" style="max-width:220px;">
                                 <button type="button" class="btn btn-outline-secondary" id="btn-add-disposisi-free">Tambah</button>
                             </div>
                             <div id="disposisi-free-list" class="mt-1"></div>
                         </div>
+                        @error('disposisi_kepada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
-                    <div id="section-pelaksana" class="d-none">
-                        <div class="mb-3">
-                            <label class="form-label">Pelaksana</label>
-                            <select name="pelaksana_id" class="form-select">
-                                <option value="">-- Pilih Pelaksana --</option>
-                                @foreach(\App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'unit_lain'))->get() as $u)
-                                <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Catatan</label>
-                            <textarea name="catatan" class="form-control" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Deadline</label>
-                            <input type="date" name="tanggal_deadline" class="form-control">
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Catatan</label>
+                        <textarea name="catatan" class="form-control" rows="3"></textarea>
                     </div>
 
-                    <div id="section-langsung" class="d-none">
-                        <div class="mb-3">
-                            <label class="form-label">Catatan Tindak Lanjut</label>
-                            <textarea name="catatan_pimpinan" class="form-control" rows="4"></textarea>
-                        </div>
+                    <div class="mb-3" id="deadline-field">
+                        <label class="form-label">Batas Waktu</label>
+                        <input type="date" name="tanggal_deadline" class="form-control">
+                    </div>
+
+                    <div class="mb-3" id="catatan-pimpinan-field">
+                        <label class="form-label">Catatan Tindak Lanjut</label>
+                        <textarea name="catatan_pimpinan" class="form-control" rows="4"></textarea>
                     </div>
 
                     <div class="mb-3">
@@ -129,17 +119,39 @@ document.getElementById('form-disposisi')?.addEventListener('submit', function()
 document.addEventListener('DOMContentLoaded', function() {
     const addBtn = document.getElementById('btn-add-disposisi-free');
     const list = document.getElementById('disposisi-free-list');
-    let idx = 0;
     if (addBtn && list) {
         addBtn.addEventListener('click', function() {
-            idx++;
             const div = document.createElement('div');
             div.className = 'input-group input-group-sm mt-1';
-            div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama/jabatan bebas">' +
+            div.innerHTML = '<input type="text" name="disposisi_kepada_free[]" class="form-control" placeholder="Nama">' +
+                '<input type="email" name="disposisi_kepada_free_email[]" class="form-control" placeholder="Email (wajib)" style="max-width:220px;">' +
                 '<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.input-group\').remove()">Hapus</button>';
             list.appendChild(div);
         });
     }
+
+    // Show/hide fields based on jenis
+    const jenisPelaksana = document.getElementById('jenis-pelaksana');
+    const jenisLangsung = document.getElementById('jenis-langsung');
+    const deadlineField = document.getElementById('deadline-field');
+    const catatanPimpinanField = document.getElementById('catatan-pimpinan-field');
+    const disposisiKepadaSelect = document.getElementById('disposisi-kepada-select');
+
+    function toggleFields() {
+        if (jenisPelaksana.checked) {
+            deadlineField.style.display = '';
+            catatanPimpinanField.style.display = 'none';
+            disposisiKepadaSelect.required = true;
+        } else {
+            deadlineField.style.display = 'none';
+            catatanPimpinanField.style.display = '';
+            disposisiKepadaSelect.required = false;
+        }
+    }
+
+    jenisPelaksana?.addEventListener('change', toggleFields);
+    jenisLangsung?.addEventListener('change', toggleFields);
+    toggleFields();
 });
 </script>
 @endpush
