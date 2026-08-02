@@ -89,7 +89,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Ringkasan</label>
-                        <textarea name="ringkasan" rows="4" class="form-control @error('ringkasan') is-invalid @enderror" placeholder="Ringkasan isi SK (bukan diktum lengkap)">{{ old('ringkasan', $rekaman->ringkasan ?? '') }}</textarea>
+                        <textarea name="ringkasan" id="ringkasan" class="form-control wysiwyg @error('ringkasan') is-invalid @enderror" placeholder="Ringkasan isi SK (bukan diktum lengkap)" rows="4">{{ old('ringkasan', $rekaman->ringkasan ?? '') }}</textarea>
                         @error('ringkasan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 

@@ -96,7 +96,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Catatan Keputusan</label>
-                        <textarea name="catatan_keputusan" rows="4" class="form-control @error('catatan_keputusan') is-invalid @enderror" placeholder="Catatan / pertimbangan hasil keputusan">{{ old('catatan_keputusan', $rekaman->catatan_keputusan ?? '') }}</textarea>
+                        <textarea name="catatan_keputusan" id="catatan_keputusan" class="form-control wysiwyg @error('catatan_keputusan') is-invalid @enderror" placeholder="Catatan / pertimbangan hasil keputusan" rows="4">{{ old('catatan_keputusan', $rekaman->catatan_keputusan ?? '') }}</textarea>
                         @error('catatan_keputusan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 

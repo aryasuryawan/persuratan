@@ -55,12 +55,12 @@
                     @endif
                     <div class="datagrid-item span-2">
                         <div class="datagrid-title">Ringkasan Pembahasan</div>
-                        <div class="datagrid-value">{{ $rapim->ringkasan_pembahasan }}</div>
+                        <div class="datagrid-value">{!! $rapim->ringkasan_pembahasan !!}</div>
                     </div>
                     @if($rapim->keputusan_arahan)
                     <div class="datagrid-item span-2">
                         <div class="datagrid-title">Keputusan / Arahan Pimpinan</div>
-                        <div class="datagrid-value">{{ $rapim->keputusan_arahan }}</div>
+                        <div class="datagrid-value">{!! $rapim->keputusan_arahan !!}</div>
                     </div>
                     @endif
                 </div>

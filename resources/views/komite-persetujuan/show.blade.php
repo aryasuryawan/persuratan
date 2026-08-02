@@ -82,7 +82,7 @@
                     @if($komite->catatan_keputusan)
                     <div class="datagrid-item span-2">
                         <div class="datagrid-title">Catatan Keputusan</div>
-                        <div class="datagrid-value">{{ $komite->catatan_keputusan }}</div>
+                        <div class="datagrid-value">{!! $komite->catatan_keputusan !!}</div>
                     </div>
                     @endif
                     <div class="datagrid-item">

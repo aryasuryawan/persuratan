@@ -65,13 +65,13 @@
 
                     <div class="mb-3">
                         <label class="form-label required">Ringkasan Pembahasan</label>
-                        <textarea name="ringkasan_pembahasan" rows="6" class="form-control @error('ringkasan_pembahasan') is-invalid @enderror" required>{{ old('ringkasan_pembahasan', $rekaman->ringkasan_pembahasan ?? '') }}</textarea>
+                        <textarea name="ringkasan_pembahasan" id="ringkasan_pembahasan" class="form-control wysiwyg @error('ringkasan_pembahasan') is-invalid @enderror" required rows="6">{{ old('ringkasan_pembahasan', $rekaman->ringkasan_pembahasan ?? '') }}</textarea>
                         @error('ringkasan_pembahasan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Keputusan / Arahan Pimpinan</label>
-                        <textarea name="keputusan_arahan" rows="4" class="form-control @error('keputusan_arahan') is-invalid @enderror">{{ old('keputusan_arahan', $rekaman->keputusan_arahan ?? '') }}</textarea>
+                        <textarea name="keputusan_arahan" id="keputusan_arahan" class="form-control wysiwyg @error('keputusan_arahan') is-invalid @enderror" rows="4">{{ old('keputusan_arahan', $rekaman->keputusan_arahan ?? '') }}</textarea>
                         @error('keputusan_arahan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 

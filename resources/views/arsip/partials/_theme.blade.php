@@ -166,3 +166,62 @@
     .simpel-detail .table-hover tbody tr:hover{background:var(--tblr-bg-surface-tertiary);}
     .simpel-detail .filter-bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
 </style>
+
+<!-- Quill WYSIWYG via CDN -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Quill on textareas with class "wysiwyg"
+    document.querySelectorAll('textarea.wysiwyg').forEach(function(textarea) {
+        if (textarea.dataset.quillInitialized) return;
+        
+        // Create container div for Quill (insert before textarea)
+        var container = document.createElement('div');
+        container.id = textarea.id + '-quill';
+        textarea.parentNode.insertBefore(container, textarea);
+        
+        // Hide original textarea (keep for form submit)
+        textarea.style.display = 'none';
+        
+        // Initialize Quill on container
+        var editor = new Quill(container, {
+            theme: 'snow',
+            placeholder: textarea.placeholder || 'Tulis di sini...',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+        
+        // Load existing content from textarea into Quill
+        if (textarea.value) {
+            try {
+                editor.root.innerHTML = textarea.value;
+            } catch (e) {
+                editor.clipboard.dangerouslyPasteHTML(textarea.value);
+            }
+        }
+        
+        // Sync Quill -> textarea on text change
+        editor.on('text-change', function() {
+            textarea.value = editor.root.innerHTML;
+        });
+        
+        // Sync on form submit (backup)
+        var form = textarea.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                textarea.value = editor.root.innerHTML;
+            });
+        }
+        
+        textarea.dataset.quillInitialized = 'true';
+    });
+});
+</script>

@@ -82,7 +82,7 @@
                     @if($sk->ringkasan)
                     <div class="datagrid-item span-2">
                         <div class="datagrid-title">Ringkasan</div>
-                        <div class="datagrid-value">{{ $sk->ringkasan }}</div>
+                        <div class="datagrid-value">{!! $sk->ringkasan !!}</div>
                     </div>
                     @endif
                 </div>
