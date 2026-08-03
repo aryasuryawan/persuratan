@@ -9,21 +9,17 @@ class SuratKeputusanPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('surat-keputusan.index');
     }
 
     public function view(User $user, SuratKeputusan $suratKeputusan): bool
     {
         if (! $suratKeputusan->is_rahasia) {
-            return true;
+            return $user->hasPermission('surat-keputusan.show');
         }
 
         if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
             return true;
-        }
-
-        if ($user->hasRole('cc_security')) {
-            return false;
         }
 
         return $suratKeputusan->punyaAksesManual($user);
@@ -31,21 +27,21 @@ class SuratKeputusanPolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('surat-keputusan.create');
     }
 
     public function update(User $user, SuratKeputusan $suratKeputusan): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('surat-keputusan.edit');
     }
 
     public function delete(User $user, SuratKeputusan $suratKeputusan): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('surat-keputusan.delete');
     }
 
     public function assignAkses(User $user, SuratKeputusan $suratKeputusan): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('surat-keputusan.assign-akses');
     }
 }

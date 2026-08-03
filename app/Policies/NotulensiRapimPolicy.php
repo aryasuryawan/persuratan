@@ -9,21 +9,17 @@ class NotulensiRapimPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('notulensi-rapim.index');
     }
 
     public function view(User $user, NotulensiRapim $rapim): bool
     {
         if (! $rapim->is_rahasia) {
-            return true;
+            return $user->hasPermission('notulensi-rapim.show');
         }
 
         if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
             return true;
-        }
-
-        if ($user->hasRole('cc_security')) {
-            return false;
         }
 
         return $rapim->punyaAksesManual($user);
@@ -31,21 +27,21 @@ class NotulensiRapimPolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('notulensi-rapim.create');
     }
 
     public function update(User $user, NotulensiRapim $rapim): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('notulensi-rapim.edit');
     }
 
     public function delete(User $user, NotulensiRapim $rapim): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('notulensi-rapim.delete');
     }
 
     public function assignAkses(User $user, NotulensiRapim $rapim): bool
     {
-        return in_array($user->role->kode, ['admin', 'sekretaris']);
+        return $user->hasPermission('notulensi-rapim.assign-akses');
     }
 }

@@ -14,6 +14,9 @@
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-email" type="button" role="tab">Email / SMTP</button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ai" type="button" role="tab">AI Assistant</button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-log" type="button" role="tab">Log Pengiriman Email</button>
     </li>
 </ul>
@@ -346,6 +349,161 @@
         </div>
     </div>
 
+    <!-- ===================== TAB AI ASSISTANT ===================== -->
+    <div class="tab-pane fade" id="tab-ai" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Pengaturan AI Assistant</h3>
+            </div>
+            <form method="POST" action="{{ route('master.settings.update') }}" id="form-ai">
+                @csrf
+                <input type="hidden" name="active_tab" value="ai">
+                <div class="card-body">
+
+                    <div class="alert alert-info">
+                        <strong>AI Assistant:</strong> floating chat bubble untuk bertanya soal data surat/dokumen. Jawaban mengikuti hak akses (role) masing-masing user. API key disimpan di server — tidak pernah bocor ke browser.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">Aktifkan AI Assistant</label>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="ai_enabled" value="1" {{ old('ai_enabled', $settings['ai_enabled']->value ?? false) ? 'checked' : '' }}>
+                            <span class="form-check-label">Ya, aktifkan fitur AI Assistant</span>
+                        </label>
+                        <small class="form-hint">Jika nonaktif, floating bubble tidak ditampilkan dan endpoint AI menolak permintaan.</small>
+                    </div>
+
+                    @php
+                    $aiProviders = [
+                        'xai' => [
+                            'label' => 'xAI (Grok) — berbayar',
+                            'base_url' => 'https://api.x.ai/v1',
+                            'key_placeholder' => 'xai-xxxxxxxxxxxx',
+                            'key_hint' => 'Dapatkan dari <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a> &gt; API Keys. Semua model xAI berbayar.',
+                            'models' => [
+                                'grok-4.3' => 'Grok 4.3 ($1.25/M input) — seimbang, default',
+                                'grok-4.5' => 'Grok 4.5 ($2.00/M input) — flagship',
+                                'grok-build-0.1' => 'Grok Build 0.1 ($1.00/M input) — coding/budget',
+                            ],
+                        ],
+                        'groq' => [
+                            'label' => 'Groq (Llama/Gemma) — GRATIS',
+                            'base_url' => 'https://api.groq.com/openai/v1',
+                            'key_placeholder' => 'gsk_xxxxxxxxxxxx',
+                            'key_hint' => 'Dapatkan dari <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a> &gt; API Keys. Free tier GRATIS dengan rate limit.',
+                            'models' => [
+                                'llama-3.3-70b-versatile' => 'Llama 3.3 70B — gratis',
+                                'llama-3.1-8b-instant' => 'Llama 3.1 8B — gratis, cepat',
+                                'gemma-2-9b-it' => 'Gemma 2 9B — gratis, ringan',
+                            ],
+                        ],
+                        'google' => [
+                            'label' => 'Google Gemini — GRATIS',
+                            'base_url' => 'https://generativelanguage.googleapis.com/v1beta/openai',
+                            'key_placeholder' => 'AIzaSyxxxxxxxxxxxx',
+                            'key_hint' => 'Dapatkan dari <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Free tier GRATIS, rate limit ketat.',
+                            'models' => [
+                                'gemini-2.5-flash' => 'Gemini 2.5 Flash — gratis, cepat',
+                                'gemini-2.0-flash' => 'Gemini 2.0 Flash — gratis, hemat',
+                            ],
+                        ],
+                        'openrouter' => [
+                            'label' => 'OpenRouter — ada model GRATIS',
+                            'base_url' => 'https://openrouter.ai/api/v1',
+                            'key_placeholder' => 'sk-or-xxxxxxxxxxxx',
+                            'key_hint' => 'Dapatkan dari <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>. Model gratis pakai slug akhiran <code>:free</code>.',
+                            'models' => [
+                                'meta-llama/llama-3.3-70b-instruct:free' => 'Llama 3.3 70B (:free) — gratis',
+                                'deepseek/deepseek-chat-v3-0324:free' => 'DeepSeek V3 (:free) — gratis',
+                            ],
+                        ],
+                    ];
+                    $currentProvider = $settings->get('ai_provider')?->value ?? 'xai';
+                    if (!isset($aiProviders[$currentProvider])) { $currentProvider = 'xai'; }
+                    $currentModel = old('ai_model', $settings['ai_model']->value ?? 'grok-4.3');
+                    @endphp
+
+                    <div class="mb-3">
+                        <label class="form-label">Provider AI</label>
+                        <select name="ai_provider" id="ai-provider" class="form-select @error('ai_provider') is-invalid @enderror">
+                            @foreach($aiProviders as $value => $p)
+                            <option value="{{ $value }}" data-base-url="{{ $p['base_url'] }}" data-key-placeholder="{{ $p['key_placeholder'] }}" {{ $currentProvider === $value ? 'selected' : '' }}>{{ $p['label'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('ai_provider') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <small class="form-hint">Ganti provider akan otomatis menyesuaikan Base URL &amp; daftar model. Semua provider OpenAI-compatible.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">API Key</label>
+                        <input type="password" name="xai_api_key" id="ai-api-key" class="form-control @error('xai_api_key') is-invalid @enderror" value="{{ old('xai_api_key', $settings['xai_api_key']->value ?? '') }}" placeholder="{{ $aiProviders[$currentProvider]['key_placeholder'] }}">
+                        @error('xai_api_key') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @foreach($aiProviders as $value => $p)
+                        <small id="ai-hint-{{ $value }}" class="form-hint {{ $currentProvider === $value ? '' : 'd-none' }}">{!! $p['key_hint'] !!}</small>
+                        @endforeach
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Base URL</label>
+                        <input type="url" name="ai_base_url" id="ai-base-url" class="form-control @error('ai_base_url') is-invalid @enderror" value="{{ old('ai_base_url', $settings['ai_base_url']->value ?? 'https://api.x.ai/v1') }}" placeholder="https://api.x.ai/v1">
+                        @error('ai_base_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <small class="form-hint">Otomatis terisi saat ganti provider. Bisa diedit manual untuk gateway/proxy lain.</small>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Model</label>
+                                <select name="ai_model" id="ai-model" class="form-select @error('ai_model') is-invalid @enderror">
+                                    @foreach($aiProviders as $pValue => $p)
+                                        @foreach($p['models'] as $mValue => $mLabel)
+                                        <option value="{{ $mValue }}" data-provider="{{ $pValue }}" {{ $currentModel === $mValue ? 'selected' : '' }}>{{ $mLabel }}</option>
+                                        @endforeach
+                                    @endforeach
+                                </select>
+                                @error('ai_model') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Max Tokens (output)</label>
+                                <input type="number" name="ai_max_tokens" class="form-control @error('ai_max_tokens') is-invalid @enderror" value="{{ old('ai_max_tokens', $settings['ai_max_tokens']->value ?? '1024') }}" min="1" max="32000">
+                                @error('ai_max_tokens') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Timeout (detik)</label>
+                                <input type="number" name="ai_timeout" class="form-control @error('ai_timeout') is-invalid @enderror" value="{{ old('ai_timeout', $settings['ai_timeout']->value ?? '30') }}" min="1" max="120">
+                                @error('ai_timeout') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Rate Limit (pertanyaan/menit per user)</label>
+                                <input type="number" name="ai_rate_limit" class="form-control @error('ai_rate_limit') is-invalid @enderror" value="{{ old('ai_rate_limit', $settings['ai_rate_limit']->value ?? '10') }}" min="1" max="1000">
+                                @error('ai_rate_limit') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <small class="form-hint">Mencegah pemakaian API key berlebihan.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-footer d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary">Simpan Pengaturan AI</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-test-ai">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:-2px;margin-right:4px;"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+                        Test Koneksi AI
+                    </button>
+                    <span id="ai-test-result" class="ms-2"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ===================== TAB LOG EMAIL ===================== -->
     <div class="tab-pane fade" id="tab-log" role="tabpanel">
         <div class="card">
@@ -524,17 +682,97 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== AI Provider switcher =====
+    const providerSel = document.getElementById('ai-provider');
+    if (providerSel) {
+        const baseUrlInput = document.getElementById('ai-base-url');
+        const apiKeyInput = document.getElementById('ai-api-key');
+        const modelSel = document.getElementById('ai-model');
+        const hints = {};
+        document.querySelectorAll('[id^="ai-hint-"]').forEach(function(el) {
+            hints[el.id.replace('ai-hint-', '')] = el;
+        });
+
+        function applyProvider() {
+            const p = providerSel.value;
+            const opt = providerSel.options[providerSel.selectedIndex];
+            baseUrlInput.value = opt.dataset.baseUrl;
+            apiKeyInput.placeholder = opt.dataset.keyPlaceholder;
+            Object.keys(hints).forEach(function(k) {
+                hints[k].classList.toggle('d-none', k !== p);
+            });
+            let selectedVisible = false;
+            for (let i = 0; i < modelSel.options.length; i++) {
+                const o = modelSel.options[i];
+                const visible = o.dataset.provider === p;
+                o.hidden = !visible;
+                if (visible && o.selected) selectedVisible = true;
+            }
+            if (!selectedVisible) {
+                for (let i = 0; i < modelSel.options.length; i++) {
+                    if (modelSel.options[i].dataset.provider === p) {
+                        modelSel.options[i].selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        providerSel.addEventListener('change', applyProvider);
+        applyProvider();
+    }
+
+    // ===== Test AI =====
+    const btnTestAi = document.getElementById('btn-test-ai');
+    if (btnTestAi) {
+        btnTestAi.addEventListener('click', function() {
+            const resultEl = document.getElementById('ai-test-result');
+            btnTestAi.disabled = true;
+            btnTestAi.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menguji...';
+            resultEl.innerHTML = '';
+
+            fetch('{{ route("master.settings.test-ai") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+            })
+            .then(function(r) {
+                return r.json().catch(function() {
+                    return { success: false, message: 'Respons tidak valid (status ' + r.status + ').' };
+                });
+            })
+            .then(function(data) {
+                if (data.success) {
+                    resultEl.innerHTML = '<span class="text-success"><strong>Berhasil:</strong> ' + data.message + '</span>';
+                } else {
+                    resultEl.innerHTML = '<span class="text-danger"><strong>Gagal:</strong> ' + data.message + '</span>';
+                }
+            })
+            .catch(function() {
+                resultEl.innerHTML = '<span class="text-danger"><strong>Gagal:</strong> Terjadi kesalahan saat menguji koneksi.</span>';
+            })
+            .finally(function() {
+                btnTestAi.disabled = false;
+                btnTestAi.innerHTML = 'Test Koneksi AI';
+            });
+        });
+    }
+
     // ===== Restore active tab after redirect =====
     const activeTab = '{{ session("active_tab", "umum") }}';
     const tabMap = {
         umum: 'tab-umum',
         email: 'tab-email',
+        ai: 'tab-ai',
         log: 'tab-log',
     };
     if (tabMap[activeTab]) {
         const target = document.getElementById(tabMap[activeTab]);
         if (target) {
-            document.querySelectorAll('#tab-umum, #tab-email, #tab-log').forEach(function(t) {
+            document.querySelectorAll('#tab-umum, #tab-email, #tab-ai, #tab-log').forEach(function(t) {
                 t.classList.remove('show', 'active');
             });
             document.querySelectorAll('.nav-tabs .nav-link').forEach(function(b) {

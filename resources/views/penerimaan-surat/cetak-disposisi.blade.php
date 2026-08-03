@@ -21,6 +21,24 @@
         }
     }
 
+    // Tujuan Pimpinan dari Surat Masuk
+    $tujuanPimpinanText = '';
+    $tujuanPimpinanJabatan = 'KETUA PENGURUS YDDR'; // default
+    if ($surat->tujuanPimpinan) {
+        $tujuanPimpinanText = $surat->tujuanPimpinan->name;
+        if ($surat->tujuanPimpinan->jabatan) {
+            $tujuanPimpinanText .= ' (' . $surat->tujuanPimpinan->jabatan . ')';
+        }
+        // Gunakan title untuk header, fallback ke jabatan
+        $tujuanPimpinanJabatan = strtoupper($surat->tujuanPimpinan->title ?? $surat->tujuanPimpinan->jabatan ?? 'KETUA PENGURUS YDDR');
+    }
+
+    // Pimpinan yang ditinggali (atas nama siapa disposisi dibuat)
+    $pimpinanJabatan = 'KETUA PENGURUS YDDR';
+    if ($disposisi->atasNamaPimpinan) {
+        $pimpinanJabatan = strtoupper($disposisi->atasNamaPimpinan->jabatan ?? 'KETUA PENGURUS YDDR');
+    }
+
     // Disposisi kepada (gabung user terpilih + free text)
     $disposisiKepadaDb = $disposisi->disposisi_kepada ?? [];
     $disposisiKepadaText = [];
@@ -55,12 +73,12 @@
 
         <div class="relative mb-6 text-center">
             <h1 class="text-xl md:text-2xl font-bold uppercase underline tracking-wide">
-                LEMBAR DISPOSISI KETUA PENGURUS YDDR
+                LEMBAR DISPOSISI {{ $tujuanPimpinanJabatan }}
             </h1>
 
             <div class="absolute right-0 top-0 hidden sm:flex items-center space-x-1">
                 @if($logo)
-                    <img src="{{ \Storage::disk('public')->url($logo) }}" alt="Logo" style="height: 60px; width: auto;">
+                    <img src="{{ \Storage::disk('public')->url($logo) }}" alt="Logo" style="height: 40px; width: auto;">
                 @else
                     <div class="text-right">
                         <span class="block text-[10px] font-black text-green-700 leading-none">DOMPET</span>
@@ -94,6 +112,14 @@
             </div>
 
             <div class="flex flex-col md:flex-row md:items-center">
+                <label class="w-28 font-medium">Tujuan Pimpinan</label>
+                <span class="hidden md:inline w-4">:</span>
+                <div class="flex-grow">
+                    <input type="text" value="{{ $tujuanPimpinanText ?: '-' }}" readonly class="w-full border border-black p-1.5 bg-gray-50">
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center">
                 <label class="w-28 font-medium">Isi surat</label>
                 <span class="hidden md:inline w-4">:</span>
                 <div class="flex-grow">
@@ -115,6 +141,12 @@
                 <label class="w-28 font-medium">Pelaksana</label>
                 <span class="hidden md:inline w-4">:</span>
                 <div class="flex-grow font-medium">{{ $pelaksanaText ?: '-' }}</div>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center">
+                <label class="w-36 font-medium">Disposisi kepada</label>
+                <span class="hidden md:inline w-4">:</span>
+                <div class="flex-grow font-medium">{{ $disposisiKepadaText ?: '-' }}</div>
             </div>
 
         </div>

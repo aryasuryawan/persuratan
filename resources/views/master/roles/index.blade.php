@@ -28,6 +28,7 @@
                     <td>{{ $r->label }}</td>
                     <td>{{ $r->users_count }}</td>
                     <td>
+                        <a href="{{ route('master.roles.permissions', $r) }}" class="btn btn-sm btn-info">Permissions</a>
                         <a href="{{ route('master.roles.edit', $r) }}" class="btn btn-sm btn-secondary">Edit</a>
                         @if($r->users_count == 0)
                         <form method="POST" action="{{ route('master.roles.destroy', $r) }}" class="d-inline" onsubmit="return confirm('Hapus role ini?')">

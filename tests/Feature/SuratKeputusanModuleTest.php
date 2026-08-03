@@ -6,6 +6,7 @@ use App\Models\Lampiran;
 use App\Models\Role;
 use App\Models\SuratKeputusan;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +32,8 @@ class SuratKeputusanModuleTest extends TestCase
         $this->sekretarisRole = Role::create(['kode' => 'sekretaris', 'label' => 'Sekretaris']);
         $this->pimpinanRole = Role::create(['kode' => 'pimpinan', 'label' => 'Pimpinan']);
         $this->unitLainRole = Role::create(['kode' => 'unit_lain', 'label' => 'Unit Lain']);
+
+        $this->seed(PermissionSeeder::class);
     }
 
     private function userDenganRole(Role $role): User

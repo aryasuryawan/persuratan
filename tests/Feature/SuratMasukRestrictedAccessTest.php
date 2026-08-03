@@ -10,6 +10,7 @@ use App\Models\StatusSurat;
 use App\Models\SuratAkses;
 use App\Models\SuratMasuk;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,6 +35,8 @@ class SuratMasukRestrictedAccessTest extends TestCase
         $this->pimpinanRole = Role::create(['kode' => 'pimpinan', 'label' => 'Pimpinan']);
         $this->unitLainRole = Role::create(['kode' => 'unit_lain', 'label' => 'Unit Lain']);
         $this->ccSecurityRole = Role::create(['kode' => 'cc_security', 'label' => 'CC Security']);
+
+        $this->seed(PermissionSeeder::class);
 
         StatusSurat::create(['kode' => 'received', 'label' => 'Diterima', 'urutan' => 1]);
         StatusSurat::create(['kode' => 'verified', 'label' => 'Diverifikasi', 'urutan' => 2]);

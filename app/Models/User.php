@@ -74,4 +74,13 @@ class User extends Authenticatable
     {
         return $this->role?->kode === $kode;
     }
+
+    public function hasPermission(string $permissionKode): bool
+    {
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        return $this->role?->hasPermission($permissionKode) ?? false;
+    }
 }

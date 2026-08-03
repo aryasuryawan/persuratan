@@ -17,14 +17,14 @@ class AksesKlasifikasiService
             return true;
         }
 
-        return in_array($user->role->kode, ['sekretaris', 'pimpinan']);
+        return $user->can('master.klasifikasi.index');
     }
 
     public function getVisibleKlasifikasi(User $user)
     {
         $query = Klasifikasi::query();
 
-        if (!$user->hasRole('admin') && !$user->hasRole('sekretaris') && !$user->hasRole('pimpinan')) {
+        if (!$user->can('master.klasifikasi.index')) {
             $query->where('is_rahasia', false);
         }
 

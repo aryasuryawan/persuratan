@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,6 +17,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        RateLimiter::for('ai-ask', function (Request $request) {
+            $perMinute = (int) Setting::get('ai_rate_limit', '10');
+            $perMinute = max(1, min($perMinute, 1000));
+
+            return Limit::perMinute($perMinute)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

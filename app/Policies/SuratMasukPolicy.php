@@ -7,14 +7,19 @@ use App\Models\User;
 
 class SuratMasukPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->hasPermission('surat-masuk.index');
+    }
+
     public function create(User $user): bool
     {
-        return in_array($user->role->kode, ['sekretaris', 'admin', 'cc_security', 'unit_lain']);
+        return $user->hasPermission('surat-masuk.create');
     }
 
     public function update(User $user, SuratMasuk $suratMasuk): bool
     {
-        if (in_array($user->role->kode, ['sekretaris', 'admin'])) {
+        if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
             return true;
         }
 
@@ -33,13 +38,13 @@ class SuratMasukPolicy
 
     public function view(User $user, SuratMasuk $suratMasuk): bool
     {
+        if (! $user->hasPermission('surat-masuk.show')) {
+            return false;
+        }
+
         if ($suratMasuk->klasifikasi->kode === 'restricted') {
             if ($user->hasRole('admin')) {
                 return true;
-            }
-
-            if ($user->hasRole('cc_security')) {
-                return false;
             }
 
             if ($suratMasuk->disposisi()->where('atas_nama_pimpinan_id', $user->id)->exists()) {
@@ -66,11 +71,7 @@ class SuratMasukPolicy
             return false;
         }
 
-        if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
-            return true;
-        }
-
-        if ($suratMasuk->klasifikasi->is_rahasia && ! $user->hasRole('pimpinan')) {
+        if ($suratMasuk->klasifikasi->is_rahasia && ! $user->hasRole('pimpinan') && ! $user->hasRole('admin') && ! $user->hasRole('sekretaris')) {
             return false;
         }
 
@@ -79,12 +80,12 @@ class SuratMasukPolicy
 
     public function verify(User $user): bool
     {
-        return in_array($user->role->kode, ['sekretaris', 'admin']);
+        return $user->hasPermission('surat-masuk.verify');
     }
 
     public function dispose(User $user): bool
     {
-        return in_array($user->role->kode, ['sekretaris', 'pimpinan', 'admin']);
+        return $user->hasPermission('disposisi.create');
     }
 
     public function assignAkses(User $user, SuratMasuk $suratMasuk): bool

@@ -14,13 +14,8 @@ class SuratKeluar extends Model
 
     protected $fillable = [
         'uuid', 'nomor_surat', 'tujuan_surat', 'perihal', 'tanggal_surat',
-        'lampiran', 'klasifikasi_id', 'kode_surat_id', 'surat_masuk_id', 'created_by',
+        'lampiran', 'klasifikasi_id', 'pimpinan_pengirim_id', 'kode_surat_id', 'surat_masuk_id', 'created_by',
     ];
-    
-    public function kodeSurat(): BelongsTo
-    {
-        return $this->belongsTo(KodeSurat::class);
-    }
 
     protected function casts(): array
     {
@@ -44,9 +39,19 @@ class SuratKeluar extends Model
         return $this->belongsTo(Klasifikasi::class);
     }
 
+    public function pimpinanPengirim(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pimpinan_pengirim_id');
+    }
+
     public function suratMasuk(): BelongsTo
     {
         return $this->belongsTo(SuratMasuk::class);
+    }
+
+    public function kodeSurat(): BelongsTo
+    {
+        return $this->belongsTo(KodeSurat::class);
     }
 
     public function pembuat(): BelongsTo

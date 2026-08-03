@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ArsipAksesController;
 use App\Http\Controllers\ArsipMediaController;
+use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\DisposisiFollowUpController;
@@ -97,6 +98,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('divisis', DivisiController::class);
         Route::resource('departemens', DepartemenController::class);
         Route::resource('roles', RoleController::class);
+        Route::get('roles/{role}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
+        Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
         Route::resource('kode-surats', KodeSuratController::class);
         Route::resource('klasifikasi', KlasifikasiController::class);
         Route::resource('users', UserController::class);
@@ -104,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
         Route::post('/settings/test-smtp', [SettingController::class, 'testSmtp'])->name('settings.test-smtp');
+        Route::post('/settings/test-ai', [SettingController::class, 'testAi'])->name('settings.test-ai');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -120,6 +124,7 @@ Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
     Route::get('/tracking/chart', [TrackingController::class, 'chart'])->name('tracking.chart');
     Route::get('/disposisi/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('disposisi.pelaksana-options');
     Route::get('/dashboard/chart', [DashboardController::class, 'chart'])->name('dashboard.chart');
+    Route::post('/ai/ask', [AiAssistantController::class, 'ask'])->middleware('throttle:ai-ask')->name('ai.ask');
 });
 
 require __DIR__.'/auth.php';

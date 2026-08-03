@@ -73,6 +73,7 @@
         @include('layouts.partials.footer')
     </div>
 </div>
+@include('ai.partials._floating-bubble')
 @stack('scripts')
 </body>
 </html>

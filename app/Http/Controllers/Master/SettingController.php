@@ -48,6 +48,14 @@ class SettingController extends Controller
             'gmail_client_id' => 'nullable|string|max:255',
             'gmail_client_secret' => 'nullable|string|max:255',
             'gmail_refresh_token' => 'nullable|string',
+            'ai_enabled' => 'nullable|boolean',
+            'ai_provider' => 'nullable|in:xai,groq,google,openrouter',
+            'xai_api_key' => 'nullable|string|max:255',
+            'ai_base_url' => 'nullable|url|max:255',
+            'ai_model' => 'nullable|string|max:100',
+            'ai_max_tokens' => 'nullable|integer|min:1|max:32000',
+            'ai_timeout' => 'nullable|integer|min:1|max:120',
+            'ai_rate_limit' => 'nullable|integer|min:1|max:1000',
         ];
 
         $data = $request->validate($rules);
@@ -55,6 +63,11 @@ class SettingController extends Controller
         // Checkbox smtp_enabled: set 0 when unchecked (hanya bila form email dikirim)
         if ($request->has('smtp_driver') || $request->boolean('smtp_enabled')) {
             $data['smtp_enabled'] = $request->boolean('smtp_enabled') ? '1' : '0';
+        }
+
+        // Checkbox ai_enabled: set 0 when unchecked (hanya bila form AI dikirim)
+        if ($request->has('ai_model') || $request->boolean('ai_enabled')) {
+            $data['ai_enabled'] = $request->boolean('ai_enabled') ? '1' : '0';
         }
 
         foreach ($data as $key => $value) {
@@ -110,5 +123,47 @@ class SettingController extends Controller
             'success' => false,
             'message' => $result['error'],
         ], 500);
+    }
+
+    public function testAi()
+    {
+        $apiKey = Setting::get('xai_api_key');
+        $baseUrl = rtrim(Setting::get('ai_base_url', 'https://api.x.ai/v1'), '/');
+        $model = Setting::get('ai_model', 'grok-4.3');
+
+        if (empty($apiKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API key belum diisi. Simpan API key terlebih dahulu.',
+            ], 422);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(15)
+                ->withToken($apiKey)
+                ->post($baseUrl . '/chat/completions', [
+                    'model' => $model,
+                    'messages' => [['role' => 'user', 'content' => 'ping']],
+                    'max_tokens' => 5,
+                ]);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Koneksi berhasil. Model '{$model}' merespons dengan baik.",
+                ]);
+            }
+
+            $error = $response->json('error.message') ?? $response->body();
+            return response()->json([
+                'success' => false,
+                'message' => "Gagal ({$response->status()}): {$error}",
+            ], 500);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

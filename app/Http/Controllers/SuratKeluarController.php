@@ -16,6 +16,8 @@ class SuratKeluarController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', SuratKeluar::class);
+
         $query = SuratKeluar::with(['klasifikasi', 'pembuat', 'kodeSurat']);
 
         if ($search = $request->get('q')) {
@@ -42,14 +44,21 @@ class SuratKeluarController extends Controller
 
     public function create(AksesKlasifikasiService $akses)
     {
+        $this->authorize('create', SuratKeluar::class);
+
         $klasifikasi = $akses->getVisibleKlasifikasi(Auth::user());
         $suratMasuk = SuratMasuk::where('status_id', statusId('completed'))->get();
         $kodeSurats = \App\Models\KodeSurat::where('aktif', true)->get();
-        return view('surat-keluar.create', compact('klasifikasi', 'suratMasuk', 'kodeSurats'));
+        $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
+            ->where('is_active', true)
+            ->get(['id', 'name', 'jabatan', 'title']);
+        return view('surat-keluar.create', compact('klasifikasi', 'suratMasuk', 'kodeSurats', 'pimpinanList'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', SuratKeluar::class);
+
         $data = $request->validate([
             'nomor_surat' => 'required|string|max:255|unique:surat_keluar',
             'tujuan_surat' => 'required|string|max:255',
@@ -58,6 +67,7 @@ class SuratKeluarController extends Controller
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
             'kode_surat_id' => 'nullable|exists:kode_surats,id',
             'surat_masuk_id' => 'nullable|exists:surat_masuk,id',
+            'pimpinan_pengirim_id' => 'required|exists:users,id',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
@@ -110,6 +120,8 @@ class SuratKeluarController extends Controller
         $surat = SuratKeluar::with(['klasifikasi', 'pembuat', 'suratMasuk', 'kodeSurat'])
             ->where('uuid', $uuid)->firstOrFail();
 
+        $this->authorize('view', $surat);
+
         return view('surat-keluar.show', compact('surat'));
     }
 
@@ -118,16 +130,23 @@ class SuratKeluarController extends Controller
         $surat = SuratKeluar::with(['klasifikasi', 'suratMasuk', 'kodeSurat'])
             ->where('uuid', $uuid)->firstOrFail();
 
+        $this->authorize('update', $surat);
+
         $klasifikasi = $akses->getVisibleKlasifikasi(Auth::user());
         $suratMasuk = SuratMasuk::where('status_id', statusId('completed'))->get();
         $kodeSurats = \App\Models\KodeSurat::where('aktif', true)->get();
+        $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
+            ->where('is_active', true)
+            ->get(['id', 'name', 'jabatan', 'title']);
 
-        return view('surat-keluar.edit', compact('surat', 'klasifikasi', 'suratMasuk', 'kodeSurats'));
+        return view('surat-keluar.edit', compact('surat', 'klasifikasi', 'suratMasuk', 'kodeSurats', 'pimpinanList'));
     }
 
     public function update(Request $request, string $uuid)
     {
         $surat = SuratKeluar::where('uuid', $uuid)->firstOrFail();
+
+        $this->authorize('update', $surat);
 
         $data = $request->validate([
             'nomor_surat' => 'required|string|max:255|unique:surat_keluar,nomor_surat,' . $surat->id,
@@ -137,6 +156,7 @@ class SuratKeluarController extends Controller
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
             'kode_surat_id' => 'nullable|exists:kode_surats,id',
             'surat_masuk_id' => 'nullable|exists:surat_masuk,id',
+            'pimpinan_pengirim_id' => 'required|exists:users,id',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'hapus_lampiran' => 'nullable|array',
             'hapus_lampiran.*' => 'string',
@@ -193,6 +213,9 @@ class SuratKeluarController extends Controller
     public function destroy(string $uuid)
     {
         $surat = SuratKeluar::where('uuid', $uuid)->firstOrFail();
+
+        $this->authorize('delete', $surat);
+
         $surat->delete();
 
         return redirect()->route('surat-keluar.index')

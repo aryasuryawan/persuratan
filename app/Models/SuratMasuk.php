@@ -18,7 +18,7 @@ class SuratMasuk extends Model
     protected $fillable = [
         'uuid', 'nomor_agenda', 'nomor_surat', 'pengirim', 'pengirim_id', 'perihal',
         'tanggal_surat', 'tanggal_diterima', 'lampiran', 'klasifikasi_id',
-        'status_id', 'is_rahasia', 'lampiran_path', 'created_by',
+        'tujuan_pimpinan_id', 'status_id', 'is_rahasia', 'lampiran_path', 'created_by',
         'verified_by', 'verified_at', 'completed_at', 'notes',
     ];
 
@@ -66,6 +66,11 @@ class SuratMasuk extends Model
     public function verifikator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function tujuanPimpinan(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'tujuan_pimpinan_id');
     }
 
     public function disposisi(): HasMany

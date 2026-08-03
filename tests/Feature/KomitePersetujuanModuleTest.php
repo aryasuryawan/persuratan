@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\KomitePersetujuan;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +28,8 @@ class KomitePersetujuanModuleTest extends TestCase
         $this->adminRole = Role::create(['kode' => 'admin', 'label' => 'Administrator']);
         $this->sekretarisRole = Role::create(['kode' => 'sekretaris', 'label' => 'Sekretaris']);
         $this->pimpinanRole = Role::create(['kode' => 'pimpinan', 'label' => 'Pimpinan']);
+
+        $this->seed(PermissionSeeder::class);
     }
 
     private function userDenganRole(Role $role): User
