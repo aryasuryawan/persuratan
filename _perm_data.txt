@@ -1,0 +1,154 @@
+﻿
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(1,'surat-masuk.index','Lihat Daftar Surat Masuk','surat_masuk','Akses halaman daftar surat masuk','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(2,'surat-masuk.create','Buat Surat Masuk','surat_masuk','Membuat surat masuk baru','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(3,'surat-masuk.show','Detail Surat Masuk','surat_masuk','Melihat detail surat masuk','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(4,'surat-masuk.edit','Edit Surat Masuk','surat_masuk','Mengedit surat masuk','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(5,'surat-masuk.delete','Hapus Surat Masuk','surat_masuk','Menghapus surat masuk','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(6,'surat-masuk.verify','Verifikasi Surat Masuk','surat_masuk','Verifikasi surat masuk (sekretaris/admin)','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(7,'surat-masuk.assign-akses','Assign Akses Surat Masuk','surat_masuk','Memberi akses manual ke surat masuk 
+restricted','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(8,'surat-keluar.index','Lihat Daftar Surat Keluar','surat_keluar','Akses halaman daftar surat keluar','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(9,'surat-keluar.create','Buat Surat Keluar','surat_keluar','Membuat surat keluar baru','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(10,'surat-keluar.show','Detail Surat Keluar','surat_keluar','Melihat detail surat keluar','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(11,'surat-keluar.edit','Edit Surat Keluar','surat_keluar','Mengedit surat keluar','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(12,'surat-keluar.delete','Hapus Surat Keluar','surat_keluar','Menghapus surat keluar','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(13,'disposisi.index','Lihat Daftar Disposisi','disposisi','Akses halaman daftar disposisi','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(14,'disposisi.create','Buat Disposisi','disposisi','Membuat disposisi baru','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(15,'disposisi.update','Update Disposisi','disposisi','Mengupdate status disposisi','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(16,'disposisi.delete','Hapus Disposisi','disposisi','Menghapus disposisi','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(17,'disposisi.followup','Follow Up Disposisi','disposisi','Membuat follow up disposisi','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(18,'disposisi.pindah','Pindah Disposisi','disposisi','Memindahkan disposisi ke user lain','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(19,'surat-keputusan.index','Lihat Daftar Surat Keputusan','surat_keputusan','Akses halaman daftar SK','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(20,'surat-keputusan.create','Buat Surat Keputusan','surat_keputusan','Membuat SK baru','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(21,'surat-keputusan.show','Detail Surat Keputusan','surat_keputusan','Melihat detail SK','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(22,'surat-keputusan.edit','Edit Surat Keputusan','surat_keputusan','Mengedit SK','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(23,'surat-keputusan.delete','Hapus Surat Keputusan','surat_keputusan','Menghapus SK','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(24,'surat-keputusan.assign-akses','Assign Akses SK','surat_keputusan','Memberi akses manual ke SK 
+rahasia','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(25,'komite-persetujuan.index','Lihat Daftar Komite','komite_persetujuan','Akses halaman daftar komite 
+persetujuan','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(26,'komite-persetujuan.create','Buat Komite','komite_persetujuan','Membuat komite persetujuan baru','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(27,'komite-persetujuan.show','Detail Komite','komite_persetujuan','Melihat detail komite','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(28,'komite-persetujuan.edit','Edit Komite','komite_persetujuan','Mengedit komite','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(29,'komite-persetujuan.delete','Hapus Komite','komite_persetujuan','Menghapus komite','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(30,'komite-persetujuan.assign-akses','Assign Akses Komite','komite_persetujuan','Memberi akses manual ke komite 
+rahasia','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(31,'notulensi-rapim.index','Lihat Daftar Notulensi','notulensi_rapim','Akses halaman daftar notulensi 
+rapim','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(32,'notulensi-rapim.create','Buat Notulensi','notulensi_rapim','Membuat notulensi baru','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(33,'notulensi-rapim.show','Detail Notulensi','notulensi_rapim','Melihat detail notulensi','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(34,'notulensi-rapim.edit','Edit Notulensi','notulensi_rapim','Mengedit notulensi','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(35,'notulensi-rapim.delete','Hapus Notulensi','notulensi_rapim','Menghapus notulensi','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(36,'notulensi-rapim.assign-akses','Assign Akses Notulensi','notulensi_rapim','Memberi akses manual ke notulensi 
+rahasia','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(37,'arsip.akses.list','Lihat Daftar Akses Arsip','arsip','Melihat daftar user yang punya akses arsip','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(38,'arsip.akses.assign','Assign Akses Arsip','arsip','Memberi akses manual ke arsip rahasia','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(39,'arsip.akses.remove','Hapus Akses Arsip','arsip','Menghapus akses manual arsip','2026-08-03 03:37:59','2026-08-03 
+03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(40,'tracking.index','Lihat Tracking Surat','tracking','Akses halaman tracking surat','2026-08-03 
+03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(41,'master.users.index','Lihat Daftar User','master','Akses master user','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(42,'master.users.create','Buat User','master','Membuat user baru','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(43,'master.users.edit','Edit User','master','Mengedit user','2026-08-03 03:37:59','2026-08-03 03:37:59');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(44,'master.users.delete','Hapus User','master','Menghapus user','2026-08-03 03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(45,'master.roles.index','Lihat Daftar Role','master','Akses master role','2026-08-03 03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(46,'master.roles.create','Buat Role','master','Membuat role baru','2026-08-03 03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(47,'master.roles.edit','Edit Role','master','Mengedit role','2026-08-03 03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(48,'master.roles.delete','Hapus Role','master','Menghapus role','2026-08-03 03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(49,'master.roles.permissions','Kelola Permission Role','master','Mengatur permission per role','2026-08-03 
+03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(50,'master.klasifikasi.index','Lihat Klasifikasi','master','Akses master klasifikasi','2026-08-03 
+03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(51,'master.klasifikasi.create','Buat Klasifikasi','master','Membuat klasifikasi baru','2026-08-03 
+03:38:00','2026-08-03 03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(52,'master.klasifikasi.edit','Edit Klasifikasi','master','Mengedit klasifikasi','2026-08-03 03:38:00','2026-08-03 
+03:38:00');
+INSERT INTO `permissions` (`id`, `kode`, `label`, `group`, `description`, `created_at`, `updated_at`) VALUES 
+(53,'master.klasifikasi.delete','Hapus Klasifikasi','master','Menghapus klasifikasi','2026-08-03 03:38:00','2026-08-03 
+03:38:00');
+
+

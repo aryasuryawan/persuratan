@@ -1,18 +1,32 @@
 <?php
 
-use App\Models\StatusSurat;
+use App\Support\StatusCache;
+
+if (!function_exists('statusIds')) {
+    function statusIds(): array
+    {
+        return StatusCache::ids();
+    }
+}
 
 if (!function_exists('statusId')) {
     function statusId(string $kode): ?int
     {
-        return StatusSurat::where('kode', $kode)->value('id');
+        return StatusCache::ids()[$kode] ?? null;
+    }
+}
+
+if (!function_exists('statusKodes')) {
+    function statusKodes(): array
+    {
+        return StatusCache::kodes();
     }
 }
 
 if (!function_exists('statusKode')) {
     function statusKode(int $id): ?string
     {
-        return StatusSurat::where('id', $id)->value('kode');
+        return StatusCache::kodes()[$id] ?? null;
     }
 }
 

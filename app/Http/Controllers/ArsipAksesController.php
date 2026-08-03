@@ -49,9 +49,9 @@ class ArsipAksesController extends Controller
         return response()->json($akses->map(function ($a) {
             return [
                 'user_id' => $a->user_id,
-                'user_name' => $a->user->name,
-                'user_email' => $a->user->email,
-                'diberikan_oleh_name' => $a->diberikanOleh->name,
+                'user_name' => $a->user?->name,
+                'user_email' => $a->user?->email,
+                'diberikan_oleh_name' => $a->diberikanOleh?->name,
                 'created_at_formatted' => $a->created_at?->format('d/m/Y H:i'),
             ];
         }));

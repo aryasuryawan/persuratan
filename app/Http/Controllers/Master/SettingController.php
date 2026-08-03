@@ -56,6 +56,8 @@ class SettingController extends Controller
             'ai_max_tokens' => 'nullable|integer|min:1|max:32000',
             'ai_timeout' => 'nullable|integer|min:1|max:120',
             'ai_rate_limit' => 'nullable|integer|min:1|max:1000',
+            'reminder_disposisi_enabled' => 'nullable|boolean',
+            'reminder_disposisi_hour' => 'nullable|integer|min:0|max:23',
         ];
 
         $data = $request->validate($rules);
@@ -68,6 +70,11 @@ class SettingController extends Controller
         // Checkbox ai_enabled: set 0 when unchecked (hanya bila form AI dikirim)
         if ($request->has('ai_model') || $request->boolean('ai_enabled')) {
             $data['ai_enabled'] = $request->boolean('ai_enabled') ? '1' : '0';
+        }
+
+        // Checkbox reminder_disposisi_enabled: set 0 when unchecked (hanya bila form Disposisi dikirim)
+        if ($request->has('reminder_disposisi_hour') || $request->boolean('reminder_disposisi_enabled')) {
+            $data['reminder_disposisi_enabled'] = $request->boolean('reminder_disposisi_enabled') ? '1' : '0';
         }
 
         foreach ($data as $key => $value) {

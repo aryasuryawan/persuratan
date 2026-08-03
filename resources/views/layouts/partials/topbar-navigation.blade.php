@@ -1,4 +1,4 @@
-@php $role = auth()->user()->role->kode; @endphp
+@php $role = $topbarRole ?? auth()->user()->role->kode; @endphp
 
 <li class="nav-item">
     <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -28,9 +28,8 @@
         </span>
         <span class="nav-link-title">
             Verifikasi
-            @php $pending = \App\Models\SuratMasuk::where('status_id', statusId('received'))->count(); @endphp
-            @if($pending > 0)
-                <span class="badge bg-red text-red-fg ms-2">{{ $pending }}</span>
+            @if(($pendingSurat ?? 0) > 0)
+                <span class="badge bg-red text-red-fg ms-2">{{ $pendingSurat }}</span>
             @endif
         </span>
     </a>

@@ -104,7 +104,7 @@
         let typing;
         let results = [];
         const dataList = document.getElementById('user-pilih-{{ $modul }}-{{ $rekaman->getKey() }}');
-        const searchUrl = '{{ route('api.user-search') }}';
+            const searchUrl = "{{ route('user-search') }}";
 
         function doSearch(q) {
             clearTimeout(typing);

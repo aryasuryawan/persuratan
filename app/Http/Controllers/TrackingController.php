@@ -41,13 +41,19 @@ class TrackingController extends Controller
         ];
 
         $baseQuery = $scope->scopeForUser(SuratMasuk::query(), $user);
+        $ids = statusIds();
+
+        $statusCounts = (clone $baseQuery)
+            ->selectRaw('status_id, COUNT(*) as jumlah')
+            ->groupBy('status_id')
+            ->pluck('jumlah', 'status_id')
+            ->mapWithKeys(fn ($c, $k) => [(int) $k => (int) $c]);
 
         foreach ($statuses as $kode => $config) {
-            $count = (clone $baseQuery)->where('status_id', statusId($kode))->count();
             $stats[] = [
                 'kode' => $kode,
                 'label' => $config['label'],
-                'count' => $count,
+                'count' => $statusCounts[$ids[$kode]] ?? 0,
                 'color' => $config['color'],
                 'icon' => $config['icon'],
                 'description' => 'surat ' . strtolower($config['label']),

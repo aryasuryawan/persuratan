@@ -17,6 +17,9 @@
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ai" type="button" role="tab">AI Assistant</button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-disposisi" type="button" role="tab">Disposisi</button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-log" type="button" role="tab">Log Pengiriman Email</button>
     </li>
 </ul>
@@ -504,6 +507,50 @@
         </div>
     </div>
 
+    <!-- ===================== TAB DISPOSISI ===================== -->
+    <div class="tab-pane fade" id="tab-disposisi" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Pengaturan Disposisi</h3>
+            </div>
+            <form method="POST" action="{{ route('master.settings.update') }}" id="form-disposisi">
+                @csrf
+                <input type="hidden" name="active_tab" value="disposisi">
+                <div class="card-body">
+
+                    <div class="alert alert-info">
+                        <strong>Reminder Deadline:</strong> jika laporan follow-up disposisi belum terisi sampai deadline, sistem mengirim email pengingat harian ke pelaksana (dimulai hari deadline) sampai follow-up diisi. Butuh jadwal cron aktif (<code>php artisan schedule:run</code> tiap menit).
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">Aktifkan Reminder Deadline Disposisi</label>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="reminder_disposisi_enabled" value="1" {{ old('reminder_disposisi_enabled', $settings['reminder_disposisi_enabled']->value ?? false) ? 'checked' : '' }}>
+                            <span class="form-check-label">Ya, aktifkan reminder harian</span>
+                        </label>
+                        <small class="form-hint">Jika nonaktif, tidak ada email pengingat deadline yang terkirim.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Jam Reminder Harian</label>
+                        <select name="reminder_disposisi_hour" class="form-select @error('reminder_disposisi_hour') is-invalid @enderror" style="max-width:200px;">
+                            @for($h = 0; $h <= 23; $h++)
+                            @php $label = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'; @endphp
+                            <option value="{{ $h }}" {{ old('reminder_disposisi_hour', $settings['reminder_disposisi_hour']->value ?? '8') == $h ? 'selected' : '' }}>{{ $label }}</option>
+                            @endfor
+                        </select>
+                        @error('reminder_disposisi_hour') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <small class="form-hint">Email reminder dikirim sekali sehari pada jam ini.</small>
+                    </div>
+
+                </div>
+                <div class="card-footer d-flex align-items-center">
+                    <button type="submit" class="btn btn-primary">Simpan Pengaturan Disposisi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ===================== TAB LOG EMAIL ===================== -->
     <div class="tab-pane fade" id="tab-log" role="tabpanel">
         <div class="card">
@@ -767,12 +814,13 @@ document.addEventListener('DOMContentLoaded', function() {
         umum: 'tab-umum',
         email: 'tab-email',
         ai: 'tab-ai',
+        disposisi: 'tab-disposisi',
         log: 'tab-log',
     };
     if (tabMap[activeTab]) {
         const target = document.getElementById(tabMap[activeTab]);
         if (target) {
-            document.querySelectorAll('#tab-umum, #tab-email, #tab-ai, #tab-log').forEach(function(t) {
+            document.querySelectorAll('#tab-umum, #tab-email, #tab-ai, #tab-disposisi, #tab-log').forEach(function(t) {
                 t.classList.remove('show', 'active');
             });
             document.querySelectorAll('.nav-tabs .nav-link').forEach(function(b) {

@@ -113,18 +113,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/user-search', [UserController::class, 'search'])->name('user-search');
 });
 
-Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
-    Route::get('/surat-masuk', [PenerimaanSuratController::class, 'index'])->name('surat-masuk');
-    Route::post('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'assignAkses'])->name('surat-masuk.assign-akses');
-    Route::delete('/surat-masuk/{uuid}/akses/{userId}', [PenerimaanSuratController::class, 'removeAkses'])->name('surat-masuk.remove-akses');
-    Route::get('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'listAkses'])->name('surat-masuk.list-akses');
-    Route::get('/user-search', [UserController::class, 'search'])->name('user-search');
-    Route::get('/tracking/chart', [TrackingController::class, 'chart'])->name('tracking.chart');
-    Route::get('/disposisi/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('disposisi.pelaksana-options');
-    Route::get('/dashboard/chart', [DashboardController::class, 'chart'])->name('dashboard.chart');
-    Route::post('/ai/ask', [AiAssistantController::class, 'ask'])->middleware('throttle:ai-ask')->name('ai.ask');
-});
+    Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(function () {
+        Route::get('/surat-masuk', [PenerimaanSuratController::class, 'index'])->name('surat-masuk');
+        Route::post('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'assignAkses'])->name('surat-masuk.assign-akses');
+        Route::delete('/surat-masuk/{uuid}/akses/{userId}', [PenerimaanSuratController::class, 'removeAkses'])->name('surat-masuk.remove-akses');
+        Route::get('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'listAkses'])->name('surat-masuk.list-akses');
+        Route::get('/tracking/chart', [TrackingController::class, 'chart'])->name('tracking.chart');
+        Route::get('/disposisi/pelaksana-options', [DisposisiController::class, 'pelaksanaOptions'])->name('disposisi.pelaksana-options');
+        Route::get('/dashboard/chart', [DashboardController::class, 'chart'])->name('dashboard.chart');
+        Route::post('/ai/ask', [AiAssistantController::class, 'ask'])->middleware('throttle:ai-ask')->name('ai.ask');
+    });
 
 require __DIR__.'/auth.php';

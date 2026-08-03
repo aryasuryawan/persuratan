@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Klasifikasi;
+use App\Models\NotulensiRapim;
 use App\Models\Role;
 use App\Models\StatusSurat;
 use App\Models\SuratAkses;
@@ -191,6 +192,54 @@ class DocumentSearchServiceTest extends TestCase
 
         $this->assertSame(2, $result['found']);
         $this->assertCount(2, $result['results']);
+    }
+
+    public function test_keyword_multi_kata_mencari_judul_tidak_berurutan(): void
+    {
+        $admin = $this->user($this->adminRole);
+        $notulen = NotulensiRapim::create([
+            'judul_rapat' => 'Rapat Pembagian Bonus Tebar Hewan Kurban 2026',
+            'tanggal' => today(),
+            'kategori' => 'Rutin',
+            'klasifikasi_id' => $this->normal->id,
+            'ringkasan_pembahasan' => 'Pembagian bonus dan hewan kurban.',
+            'is_rahasia' => false,
+            'dicatat_oleh_id' => $admin->id,
+        ]);
+
+        $result = $this->service()->search($admin, 'notulen_rapim', 'bonus kurban');
+
+        $this->assertSame(1, $result['found']);
+        $this->assertSame(route('notulensi-rapim.show', $notulen->uuid), $result['results'][0]['url']);
+    }
+
+    public function test_modul_all_mencari_seluruh_modul_sekaligus(): void
+    {
+        $admin = $this->user($this->adminRole);
+        $notulen = NotulensiRapim::create([
+            'judul_rapat' => 'Rapat Pembagian Bonus Tebar Hewan Kurban 2026',
+            'tanggal' => today(),
+            'kategori' => 'Rutin',
+            'klasifikasi_id' => $this->normal->id,
+            'ringkasan_pembahasan' => 'Pembagian bonus dan hewan kurban.',
+            'is_rahasia' => false,
+            'dicatat_oleh_id' => $admin->id,
+        ]);
+        $surat = $this->createSuratKeluar('SKL-2026-0202', 'Permohonan Bonus Tahunan Karyawan');
+
+        $result = $this->service()->search($admin, 'all', 'bonus');
+
+        $this->assertSame(2, $result['found']);
+        $this->assertContains('notulen_rapim', array_column($result['results'], 'modul'));
+        $this->assertContains('surat_keluar', array_column($result['results'], 'modul'));
+        $this->assertSame(
+            route('notulensi-rapim.show', $notulen->uuid),
+            collect($result['results'])->firstWhere('modul', 'notulen_rapim')['url']
+        );
+        $this->assertSame(
+            route('surat-keluar.show', $surat->uuid),
+            collect($result['results'])->firstWhere('modul', 'surat_keluar')['url']
+        );
     }
 
     public function test_modul_tidak_dikenal_kembali_kosong(): void

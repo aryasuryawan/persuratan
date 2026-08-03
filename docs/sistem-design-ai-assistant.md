@@ -67,6 +67,8 @@
 | `notulen_rapim` | `NotulensiRapim` | `ArsipAksesService::scopeUntukUser` | `notulensi-rapim.*` |
 
 > Catatan: permission cek via `$user->hasPermission('surat-masuk.index')` dulu → baru scope query.
+>
+> Modul `all` (di `DocumentSearchService`): cari di kelima modul sekaligus, hasil diberi tag `modul` asli per baris. Dipakai AI saat modul tidak disebut user — keyword dipecah per kata (AND), jadi "bonus kurban" ketemu walau judulnya "Bonus Tebar Hewan Kurban".
 
 ---
 
@@ -138,7 +140,8 @@ Error 422 (validasi), 403 (no permission / ai disabled), 429 (rate limit),
       "properties": {
         "modul": { "type": "string",
                    "enum": ["surat_masuk","surat_keluar","surat_keputusan",
-                            "komite_persetujuan","notulen_rapim"] },
+                            "komite_persetujuan","notulen_rapim","all"],
+                   "description": "modul data yang dicari; 'all' = cari semua modul sekaligus" },
         "keyword": { "type": "string", "description": "kata kunci / perihal / nomor surat" },
         "limit": { "type": "integer", "maximum": 5 }
       },

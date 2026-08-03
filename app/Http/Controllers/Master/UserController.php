@@ -52,7 +52,6 @@ class UserController extends Controller
             ->where('name', 'like', "%{$q}%")
             ->orWhere('email', 'like', "%{$q}%")
             ->where('is_active', true)
-            ->where('id', '!=', auth()->id())
             ->limit(10)
             ->get();
 

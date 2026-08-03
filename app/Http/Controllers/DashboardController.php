@@ -18,26 +18,42 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user);
+        $ids = statusIds();
 
-        $totalSuratMasuk = (clone $suratQuery)->count();
-        $perluVerifikasi = (clone $suratQuery)->where('status_id', statusId('received'))->count();
-        $selesai = (clone $suratQuery)->where('status_id', statusId('completed'))->count();
+        $statusCounts = (clone $suratQuery)
+            ->selectRaw('status_id, COUNT(*) as jumlah')
+            ->groupBy('status_id')
+            ->pluck('jumlah', 'status_id')
+            ->mapWithKeys(fn ($c, $k) => [(int) $k => (int) $c]);
+
+        $totalSuratMasuk = $statusCounts->sum();
+        $perluVerifikasi = $statusCounts[$ids['received']] ?? 0;
+        $selesai = $statusCounts[$ids['completed']] ?? 0;
         $persenSelesai = $totalSuratMasuk > 0 ? round(($selesai / $totalSuratMasuk) * 100) : 0;
+
+        $dalamProses = collect([
+            $ids['verified'],
+            $ids['forwarded_to_leadership'],
+            $ids['assigned'],
+            $ids['handled_by_leadership'],
+            $ids['in_progress'],
+        ])->sum(fn ($id) => $statusCounts[$id] ?? 0);
+
+        $daily = (clone $suratQuery)
+            ->whereBetween('tanggal_diterima', [today()->subDay(), today()])
+            ->selectRaw('tanggal_diterima, COUNT(*) as jumlah')
+            ->groupBy('tanggal_diterima')
+            ->pluck('jumlah', 'tanggal_diterima')
+            ->map(fn ($c) => (int) $c);
 
         $data = [
             'totalSuratMasuk' => $totalSuratMasuk,
             'perluVerifikasi' => $perluVerifikasi,
-            'dalamProses' => (clone $suratQuery)->whereIn('status_id', [
-                statusId('verified'),
-                statusId('forwarded_to_leadership'),
-                statusId('assigned'),
-                statusId('handled_by_leadership'),
-                statusId('in_progress'),
-            ])->count(),
+            'dalamProses' => $dalamProses,
             'selesai' => $selesai,
             'persenSelesai' => $persenSelesai,
-            'suratHariIni' => (clone $suratQuery)->whereDate('tanggal_diterima', today())->count(),
-            'suratKemarin' => (clone $suratQuery)->whereDate('tanggal_diterima', today()->subDay())->count(),
+            'suratHariIni' => $daily[today()->toDateString()] ?? 0,
+            'suratKemarin' => $daily[today()->subDay()->toDateString()] ?? 0,
             'suratTerbaru' => (clone $suratQuery)->with(['status', 'klasifikasi'])
                 ->latest('tanggal_diterima')->take(5)->get(),
             'suratKeluar' => SuratKeluar::query()->withoutTrashed()->count(),
@@ -73,32 +89,49 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user);
+        $ids = statusIds();
 
-        $totalSuratMasuk = (clone $suratQuery)->count();
-        $perluVerifikasi = (clone $suratQuery)->where('status_id', statusId('received'))->count();
-        $selesai = (clone $suratQuery)->where('status_id', statusId('completed'))->count();
-        $dalamProses = (clone $suratQuery)->whereIn('status_id', [
-            statusId('verified'),
-            statusId('forwarded_to_leadership'),
-            statusId('assigned'),
-            statusId('handled_by_leadership'),
-            statusId('in_progress'),
-        ])->count();
+        $statusCounts = (clone $suratQuery)
+            ->selectRaw('status_id, COUNT(*) as jumlah')
+            ->groupBy('status_id')
+            ->pluck('jumlah', 'status_id')
+            ->mapWithKeys(fn ($c, $k) => [(int) $k => (int) $c]);
+
+        $totalSuratMasuk = $statusCounts->sum();
+        $perluVerifikasi = $statusCounts[$ids['received']] ?? 0;
+        $selesai = $statusCounts[$ids['completed']] ?? 0;
+        $dalamProses = collect([
+            $ids['verified'],
+            $ids['forwarded_to_leadership'],
+            $ids['assigned'],
+            $ids['handled_by_leadership'],
+            $ids['in_progress'],
+        ])->sum(fn ($id) => $statusCounts[$id] ?? 0);
+
         $suratKeluar = \App\Models\SuratKeluar::count();
-        $suratHariIni = (clone $suratQuery)->whereDate('tanggal_diterima', today())->count();
-        $suratKemarin = (clone $suratQuery)->whereDate('tanggal_diterima', today()->subDay())->count();
+
+        // Daily counts for last 30 days - single GROUP BY
+        $start = Carbon::today()->subDays(29);
+        $daily = (clone $suratQuery)
+            ->whereBetween('tanggal_diterima', [$start, today()])
+            ->selectRaw('tanggal_diterima, COUNT(*) as jumlah')
+            ->groupBy('tanggal_diterima')
+            ->pluck('jumlah', 'tanggal_diterima')
+            ->map(fn ($c) => (int) $c);
+
+        $suratHariIni = $daily[today()->toDateString()] ?? 0;
+        $suratKemarin = $daily[today()->subDay()->toDateString()] ?? 0;
         $persenSelesai = $totalSuratMasuk > 0 ? round(($selesai / $totalSuratMasuk) * 100) : 0;
 
-        // Daily counts for last 30 days
         $dailyLabels = [];
         $dailyCounts = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
             $dailyLabels[] = $date->format('d M');
-            $dailyCounts[] = (clone $suratQuery)->whereDate('tanggal_diterima', $date)->count();
+            $dailyCounts[] = $daily[$date->toDateString()] ?? 0;
         }
 
-        // Status breakdown for donut
+        // Status breakdown for donut - derived from single grouped query
         $statusData = collect();
         $statusKodeMap = [
             'received' => 'Diterima',
@@ -110,7 +143,7 @@ class DashboardController extends Controller
             'archived' => 'Diarsipkan',
         ];
         foreach ($statusKodeMap as $kode => $label) {
-            $count = (clone $suratQuery)->where('status_id', statusId($kode))->count();
+            $count = $statusCounts[$ids[$kode]] ?? 0;
             if ($count > 0) {
                 $statusData->push(['label' => $label, 'count' => $count]);
             }
@@ -141,14 +174,21 @@ class DashboardController extends Controller
         $user = Auth::user();
         $suratQuery = app(SuratScopeService::class)->scopeForUser(SuratMasuk::query(), $user);
 
-        $days = 30;
+        $start = Carbon::today()->subDays(29);
+        $daily = (clone $suratQuery)
+            ->whereBetween('tanggal_diterima', [$start, today()])
+            ->selectRaw('tanggal_diterima, COUNT(*) as jumlah')
+            ->groupBy('tanggal_diterima')
+            ->pluck('jumlah', 'tanggal_diterima')
+            ->map(fn ($c) => (int) $c);
+
         $labels = [];
         $values = [];
 
-        for ($i = $days - 1; $i >= 0; $i--) {
+        for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
             $labels[] = $date->format('d M');
-            $values[] = (clone $suratQuery)->whereDate('tanggal_diterima', $date)->count();
+            $values[] = $daily[$date->toDateString()] ?? 0;
         }
 
         return response()->json([

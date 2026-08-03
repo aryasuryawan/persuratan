@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label{{ $errors->has('disposisi_kepada') ? ' required' : '' }}">Disposisi kepada</label>
+                        <label class="form-label">Disposisi kepada</label>
                         <select name="disposisi_kepada[]" class="form-select" multiple id="disposisi-kepada-select">
                             @foreach(\App\Models\User::where('is_active', true)->get() as $u)
                             <option value="{{ $u->name }}">{{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif</option>
@@ -83,7 +83,7 @@
                     </div>
 
                     <div class="mb-3" id="deadline-field">
-                        <label class="form-label">Batas Waktu</label>
+                        <label class="form-label">Deadline Laporan Follow up Disposisi</label>
                         <input type="date" name="tanggal_deadline" class="form-control">
                     </div>
 
@@ -141,11 +141,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (jenisPelaksana.checked) {
             deadlineField.style.display = '';
             catatanPimpinanField.style.display = 'none';
-            disposisiKepadaSelect.required = true;
         } else {
             deadlineField.style.display = 'none';
             catatanPimpinanField.style.display = '';
-            disposisiKepadaSelect.required = false;
         }
     }
 

@@ -58,31 +58,33 @@ class DisposisiController extends Controller
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        // Validasi: ke_pelaksana butuh minimal 1 user di disposisi_kepada
-        if ($data['jenis'] === 'ke_pelaksana' && empty($data['disposisi_kepada'])) {
-            return back()->withErrors(['disposisi_kepada' => 'Minimal pilih 1 pelaksana untuk jenis "Ke Pelaksana".'])->withInput();
-        }
+        // Merge freetext recipients (name + optional email) into disposisi_kepada.
+        // Nama+email yang belum terdaftar otomatis dibuat sebagai user baru.
+        $data['disposisi_kepada'] = $this->resolveDisposisiKepada($data);
 
-        // Merge freetext recipients (name + optional email) into disposisi_kepada
-        $freeTexts = [];
-        foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
-            if ($name === null || trim($name) === '') {
-                continue;
+        // Validasi: ke_pelaksana butuh minimal 1 user di disposisi_kepada
+        // Kecuali jika disisi dengan nama/jabatan bebas (disposisi_kepada_free)
+        if ($data['jenis'] === 'ke_pelaksana' && empty($data['disposisi_kepada'])) {
+            $hasValidFreeText = false;
+            foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
+                if ($name && trim($name) !== '') {
+                    $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
+                    if ($email) {
+                        $hasValidFreeText = true;
+                        break;
+                    }
+                }
             }
-            $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
-            $freeTexts[] = $email !== '' ? trim($name) . ' <' . $email . '>' : trim($name);
+            if (!$hasValidFreeText) {
+                return back()->withErrors(['disposisi_kepada' => 'Minimal pilih 1 pelaksana untuk jenis "Ke Pelaksana".'])->withInput();
+            }
         }
-        $disposisiKepada = array_merge(
-            $data['disposisi_kepada'] ?? [],
-            $freeTexts
-        );
-        $data['disposisi_kepada'] = $disposisiKepada;
 
         // Tentukan pelaksana (kepada_user_id) dari user pertama di disposisi_kepada yang ada di tabel users
         $pelaksanaUser = null;
-        if ($data['jenis'] === 'ke_pelaksana' && !empty($disposisiKepada)) {
+        if ($data['jenis'] === 'ke_pelaksana' && !empty($data['disposisi_kepada'])) {
             $userNames = User::where('is_active', true)->pluck('id', 'name')->toArray();
-            foreach ($disposisiKepada as $item) {
+            foreach ($data['disposisi_kepada'] as $item) {
                 if (isset($userNames[$item])) {
                     $pelaksanaUser = User::find($userNames[$item]);
                     break;
@@ -123,6 +125,51 @@ class DisposisiController extends Controller
             ->get(['id', 'name']);
 
         return response()->json($users);
+    }
+
+    private function resolveDisposisiKepada(array $data): array
+    {
+        $names = array_values(array_filter(
+            $data['disposisi_kepada'] ?? [],
+            fn($n) => is_string($n) && trim($n) !== ''
+        ));
+
+        foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
+            if ($name === null || trim($name) === '') {
+                continue;
+            }
+            $name = trim($name);
+            $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
+
+            if ($email === '') {
+                $names[] = $name;
+                continue;
+            }
+
+            $user = User::where('name', $name)->where('is_active', true)->first()
+                ?? User::where('email', $email)->first();
+
+            if (!$user) {
+                if (empty($email)) {
+                    continue;
+                }
+                $roleId = \App\Models\Role::where('kode', 'unit_lain')->value('id')
+                    ?? \App\Models\Role::first()?->id;
+                if ($roleId) {
+                    $user = User::create([
+                        'role_id' => $roleId,
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => 'Password99',
+                        'is_active' => true,
+                    ]);
+                }
+            }
+
+            $names[] = $user?->name ?? $name;
+        }
+
+        return array_values(array_unique($names));
     }
 
     public function pindah(Request $request, Disposisi $disposisi)
@@ -242,20 +289,9 @@ class DisposisiController extends Controller
             'disposisi_kepada_free_email.*' => 'nullable|email',
         ]);
 
-        // Merge freetext recipients (name + optional email) into disposisi_kepada
-        $freeTexts = [];
-        foreach ($data['disposisi_kepada_free'] ?? [] as $i => $name) {
-            if ($name === null || trim($name) === '') {
-                continue;
-            }
-            $email = trim($data['disposisi_kepada_free_email'][$i] ?? '');
-            $freeTexts[] = $email !== '' ? trim($name) . ' <' . $email . '>' : trim($name);
-        }
-        $disposisiKepada = array_merge(
-            $data['disposisi_kepada'] ?? [],
-            $freeTexts
-        );
-        $data['disposisi_kepada'] = $disposisiKepada;
+        // Merge freetext recipients (name + optional email) into disposisi_kepada.
+        // Nama+email yang belum terdaftar otomatis dibuat sebagai user baru.
+        $data['disposisi_kepada'] = $this->resolveDisposisiKepada($data);
 
         $old = $disposisi->getAttributes();
         $disposisi->update($data);

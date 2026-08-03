@@ -237,7 +237,7 @@
                                         </div>
                                         @endif
                                         <div class="mb-2">
-                                            <label class="form-label small">Batas Waktu</label>
+                                            <label class="form-label small">Deadline Laporan Follow up Disposisi</label>
                                             <input type="date" name="tanggal_deadline" class="form-control form-control-sm" value="{{ old('tanggal_deadline', $d->tanggal_deadline?->format('Y-m-d')) }}">
                                         </div>
                                         <button type="submit" class="btn btn-sm btn-primary">Simpan</button>

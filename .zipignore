@@ -1,0 +1,84 @@
+# .zip exclude list untuk deploy Laravel ke cPanel
+# Simpan sebagai .zipignore atau gunakan dengan: zip -r app.zip . -x@.zipignore
+
+# Dependencies (akan di-install ulang di server)
+vendor/
+node_modules/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Environment & cache
+.env
+.env.*.local
+.env.production
+.env.staging
+.env.testing
+
+# Storage logs & cache (akan digenerate ulang)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+!storage/logs/.gitkeep
+!storage/framework/cache/.gitkeep
+!storage/framework/sessions/.gitkeep
+!storage/framework/views/.gitkeep
+!storage/framework/testing/.gitkeep
+
+# Bootstrap cache (akan digenerate ulang)
+bootstrap/cache/*.php
+!bootstrap/cache/.gitkeep
+
+# IDE & editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+phpunit.xml
+phpunit.xml.dist
+.phpunit.result.cache
+coverage/
+.phpunit.cache/
+
+# Build artifacts (jika sudah build lokal, bisa include public/build)
+# public/build/
+# public/hot
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Composer
+composer.phar
+
+# Backup & temp
+*.backup
+*.bak
+*.tmp
+*.temp
+*.sql
+*.sqlite
+*.db
+
+# Laravel specific
+.env.backup
+*.key
+
+# Keep these folders but empty
+!storage/app/.gitkeep
+!storage/framework/.gitkeep
+!storage/logs/.gitkeep
+!bootstrap/cache/.gitkeep
