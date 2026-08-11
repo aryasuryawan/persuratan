@@ -15,7 +15,7 @@ class SuratStatusChanged
         public SuratMasuk $surat,
         public ?int $statusDariId,
         public int $statusKeId,
-        public User $dilakukanOleh,
+        public ?User $dilakukanOleh = null,
         public ?int $atasNamaPimpinanId = null,
         public ?string $catatan = null,
         public ?int $disposisiId = null,

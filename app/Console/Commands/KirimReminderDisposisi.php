@@ -98,6 +98,7 @@ class KirimReminderDisposisi extends Command
         $appLogoUrl = $appLogo ? \Illuminate\Support\Facades\Storage::disk('public')->url($appLogo) : null;
         $appUrl = config('app.url');
         $detailUrl = $appUrl . '/penerimaan-surat/' . $surat->uuid;
+        $followUpUrl = $appUrl . '/follow-up/' . $disposisi->uuid;
 
         $deadline = $disposisi->tanggal_deadline?->format('d/m/Y') ?? '-';
         $instruksi = !empty($disposisi->instruksi) ? implode(', ', $disposisi->instruksi) : '-';
@@ -145,7 +146,7 @@ class KirimReminderDisposisi extends Command
         </div>
 
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-            <a href="{$detailUrl}" style="display: inline-block; background: #dc2626; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+            <a href="{$followUpUrl}" style="display: inline-block; background: #dc2626; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
                 Isi Laporan Follow Up
             </a>
         </div>

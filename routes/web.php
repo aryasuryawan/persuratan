@@ -31,6 +31,11 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+Route::prefix('follow-up')->name('follow-up.')->group(function () {
+    Route::get('/{disposisi:uuid}', [DisposisiFollowUpController::class, 'publikForm'])->middleware('throttle:30,1')->name('publik');
+    Route::post('/{disposisi:uuid}', [DisposisiFollowUpController::class, 'publikKirim'])->middleware('throttle:5,1')->name('publik.kirim');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -31,8 +31,8 @@
             <div class="text-secondary float-end">{{ $riwayat->created_at->diffForHumans() }}</div>
             <h4>{{ $riwayat->statusKe->label }}</h4>
             <p class="text-secondary mb-1">
-                Oleh: <strong>{{ $riwayat->dilakukanOleh->name }}</strong>
-                <span class="text-secondary">({{ $riwayat->dilakukanOleh->role->label ?? 'User' }})</span>
+                Oleh: <strong>{{ $riwayat->dilakukanOleh?->name ?? 'Sistem' }}</strong>
+                <span class="text-secondary">({{ $riwayat->dilakukanOleh?->role->label ?? 'Publik' }})</span>
                 @if($riwayat->atasNamaPimpinan && $riwayat->atasNamaPimpinan->id !== $riwayat->dilakukan_oleh_id)
                     <span class="text-secondary"> — atas nama </span>
                     <strong>{{ $riwayat->atasNamaPimpinan->name }}</strong>

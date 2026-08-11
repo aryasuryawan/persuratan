@@ -252,6 +252,7 @@ class BuatDisposisi
         $kepadaNama = $kepadaUser?->name ?? $disposisiKepadaList;
         $batasWaktu = $tanggalDeadline ? \Carbon\Carbon::parse($tanggalDeadline)->format('d/m/Y') : '-';
         $detailUrl = $appUrl . '/penerimaan-surat/' . $surat->uuid;
+        $followUpUrl = $appUrl . '/follow-up/' . $disposisi->uuid;
         $catatanHtml = nl2br(e($catatan ?? ''));
         $catatanPimpinanHtml = nl2br(e($catatanPimpinan ?? ''));
         $showCatatan = !empty($catatan) || !empty($catatanPimpinan);
@@ -352,9 +353,14 @@ class BuatDisposisi
         {$catatanSection}
 
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <a href="{$followUpUrl}" style="display: inline-block; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; margin-bottom: 12px;">
+                Lapor Follow Up Disposisi
+            </a>
+            <div>
             <a href="{$detailUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
                 Lihat Detail Surat
             </a>
+            </div>
         </div>
 
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">

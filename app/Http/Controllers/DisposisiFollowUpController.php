@@ -9,6 +9,7 @@ use App\Models\RiwayatPerubahanData;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -16,7 +17,7 @@ class DisposisiFollowUpController extends Controller
 {
     public function update(Request $request, Disposisi $disposisi, DisposisiFollowUp $followUp)
     {
-        if ($followUp->user_id !== Auth::id() && !in_array(Auth::user()->role->kode, ['sekretaris', 'admin'])) {
+        if ($followUp->user_id !== Auth::id() && ! in_array(Auth::user()->role->kode, ['sekretaris', 'admin'])) {
             abort(403, 'Anda tidak berhak mengubah follow-up ini.');
         }
 
@@ -32,7 +33,7 @@ class DisposisiFollowUpController extends Controller
 
         if ($hapus) {
             $lampiran = array_values(array_filter($lampiran, function ($file) use ($hapus) {
-                return !in_array($file['stored_path'] ?? null, $hapus);
+                return ! in_array($file['stored_path'] ?? null, $hapus);
             }));
         }
 
@@ -40,22 +41,22 @@ class DisposisiFollowUpController extends Controller
         if ($files && is_array($files)) {
             foreach ($files as $file) {
                 try {
-                    if (!$file instanceof UploadedFile || !$file->isValid()) {
+                    if (! $file instanceof UploadedFile || ! $file->isValid()) {
                         continue;
                     }
                     $originalName = $file->getClientOriginalName();
                     $mimeType = $file->getMimeType();
                     $fileSize = $file->getSize();
-                    $ext = $file->getClientOriginalExtension() ?: 'bin';
+                    $ext = $file->guessExtension() ?: 'bin';
                     $destDir = storage_path('app/public/disposisi');
-                    if (!is_dir($destDir)) {
+                    if (! is_dir($destDir)) {
                         mkdir($destDir, 0755, true);
                     }
-                    $filename = Str::random(40) . '.' . $ext;
+                    $filename = Str::random(40).'.'.$ext;
                     $file->move($destDir, $filename);
                     $lampiran[] = [
                         'original_name' => $originalName,
-                        'stored_path' => 'disposisi/' . $filename,
+                        'stored_path' => 'disposisi/'.$filename,
                         'mime_type' => $mimeType,
                         'file_size' => $fileSize,
                     ];
@@ -67,7 +68,7 @@ class DisposisiFollowUpController extends Controller
 
         $followUp->update([
             'keterangan' => $data['keterangan'],
-            'lampiran' => !empty($lampiran) ? $lampiran : null,
+            'lampiran' => ! empty($lampiran) ? $lampiran : null,
         ]);
 
         $perubahan = [];
@@ -83,23 +84,110 @@ class DisposisiFollowUpController extends Controller
         if ($oldLampiranCount !== $newLampiranCount) {
             $perubahan['lampiran'] = [
                 'label' => 'Lampiran Follow-up',
-                'lama' => $oldLampiranCount . ' file',
-                'baru' => $newLampiranCount . ' file',
+                'lama' => $oldLampiranCount.' file',
+                'baru' => $newLampiranCount.' file',
             ];
         }
 
-        if (!empty($perubahan)) {
+        if (! empty($perubahan)) {
             $disposisi = $followUp->disposisi;
             RiwayatPerubahanData::create([
                 'surat_masuk_id' => $disposisi->surat_masuk_id,
                 'disposisi_id' => $disposisi->id,
                 'dilakukan_oleh_id' => Auth::id(),
                 'perubahan' => $perubahan,
-                'catatan' => 'Follow-up diperbarui oleh ' . Auth::user()->name . '.',
+                'catatan' => 'Follow-up diperbarui oleh '.Auth::user()->name.'.',
             ]);
         }
 
         return back()->with('success', 'Follow-up berhasil diperbarui.');
+    }
+
+    public function publikForm(Disposisi $disposisi)
+    {
+        return view('disposisi-follow-up.publik', [
+            'disposisi' => $disposisi,
+            'surat' => $disposisi->suratMasuk,
+            'sudahDiisi' => $disposisi->followUps()->exists(),
+        ]);
+    }
+
+    public function publikKirim(Request $request, Disposisi $disposisi)
+    {
+        $data = $request->validate([
+            'keterangan' => 'required|string',
+            'lampiran.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp|max:10240',
+        ]);
+
+        return DB::transaction(function () use ($request, $disposisi, $data) {
+            $locked = Disposisi::whereKey($disposisi->id)->lockForUpdate()->first();
+
+            if ($locked && $locked->followUps()->exists()) {
+                return redirect()->route('follow-up.publik', $locked->uuid)
+                    ->with('error', 'Laporan follow-up surat ini sudah pernah dikirim. Link tidak lagi aktif.');
+            }
+
+            $disposisi->followUps()->create([
+                'user_id' => null,
+                'keterangan' => $data['keterangan'],
+                'lampiran' => $this->simpanLampiran($request->file('lampiran')),
+            ]);
+
+            $surat = $disposisi->suratMasuk;
+            if ($surat && ! in_array($surat->status->kode, ['completed', 'archived'])) {
+                $oldStatusId = $surat->status_id;
+                $surat->update([
+                    'status_id' => statusId('completed'),
+                    'completed_at' => now(),
+                ]);
+
+                event(new SuratStatusChanged(
+                    surat: $surat,
+                    statusDariId: $oldStatusId,
+                    statusKeId: statusId('completed'),
+                    dilakukanOleh: null,
+                    catatan: 'Selesai setelah follow-up publik',
+                    disposisiId: $disposisi->id,
+                ));
+            }
+
+            return redirect()->route('follow-up.publik', $disposisi->uuid)
+                ->with('success', 'Laporan follow-up berhasil dikirim. Terima kasih.');
+        });
+    }
+
+    private function simpanLampiran($files): ?array
+    {
+        $lampiran = [];
+
+        if ($files && is_array($files)) {
+            foreach ($files as $file) {
+                try {
+                    if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                        continue;
+                    }
+                    $originalName = $file->getClientOriginalName();
+                    $mimeType = $file->getMimeType();
+                    $fileSize = $file->getSize();
+                    $destDir = storage_path('app/public/disposisi');
+                    if (! is_dir($destDir)) {
+                        mkdir($destDir, 0755, true);
+                    }
+                    $filename = Str::random(40).'.'.($file->guessExtension() ?: 'bin');
+                    $file->move($destDir, $filename);
+                    $lampiran[] = [
+                        'original_name' => $originalName,
+                        'stored_path' => 'disposisi/'.$filename,
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                    ];
+                } catch (\Throwable $e) {
+                    Log::error('Follow-up lampiran upload failed', ['error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        return ! empty($lampiran) ? $lampiran : null;
     }
 
     public function store(Request $request, Disposisi $disposisi)
@@ -115,20 +203,20 @@ class DisposisiFollowUpController extends Controller
         if ($files && is_array($files)) {
             foreach ($files as $file) {
                 try {
-                    if (!$file instanceof UploadedFile || !$file->isValid()) {
+                    if (! $file instanceof UploadedFile || ! $file->isValid()) {
                         continue;
                     }
                     $originalName = $file->getClientOriginalName();
                     $mimeType = $file->getMimeType();
                     $fileSize = $file->getSize();
-                    $ext = $file->getClientOriginalExtension() ?: 'bin';
+                    $ext = $file->guessExtension() ?: 'bin';
                     $destDir = storage_path('app/public/disposisi');
-                    if (!is_dir($destDir)) {
+                    if (! is_dir($destDir)) {
                         mkdir($destDir, 0755, true);
                     }
-                    $filename = Str::random(40) . '.' . $ext;
+                    $filename = Str::random(40).'.'.$ext;
                     $file->move($destDir, $filename);
-                    $path = 'disposisi/' . $filename;
+                    $path = 'disposisi/'.$filename;
                     $lampiran[] = [
                         'original_name' => $originalName,
                         'stored_path' => $path,
@@ -144,11 +232,11 @@ class DisposisiFollowUpController extends Controller
         $disposisi->followUps()->create([
             'user_id' => Auth::id(),
             'keterangan' => $data['keterangan'],
-            'lampiran' => !empty($lampiran) ? $lampiran : null,
+            'lampiran' => ! empty($lampiran) ? $lampiran : null,
         ]);
 
         $surat = $disposisi->suratMasuk;
-        if (!in_array($surat->status->kode, ['completed', 'archived'])) {
+        if (! in_array($surat->status->kode, ['completed', 'archived'])) {
             $oldStatusId = $surat->status_id;
             $surat->update([
                 'status_id' => statusId('completed'),
