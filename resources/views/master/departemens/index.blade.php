@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('page-title', 'Master Departemen')
 
@@ -72,9 +72,7 @@
         <div class="text-muted">
             Menampilkan <strong>{{ $departemens->firstItem() }}</strong> sampai <strong>{{ $departemens->lastItem() }}</strong> dari <strong>{{ $departemens->total() }}</strong> data
         </div>
-        <ul class="pagination ms-auto mb-0">
-            {{ $departemens->app(request()->query())->links() }}
-        </ul>
+        {{ $departemens->appends(request()->query())->links() }}
         <div class="ms-3 d-flex align-items-center">
             <label class="form-label mb-0 me-2" style="white-space:nowrap;">Per halaman</label>
             <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('page-title', 'Master Struktur')
 
@@ -62,9 +62,7 @@
         <div class="text-muted">
             Menampilkan <strong>{{ $strukturs->firstItem() }}</strong> sampai <strong>{{ $strukturs->lastItem() }}</strong> dari <strong>{{ $strukturs->total() }}</strong> data
         </div>
-        <ul class="pagination ms-auto mb-0">
-            {{ $strukturs->app(request()->query())->links() }}
-        </ul>
+        {{ $strukturs->appends(request()->query())->links() }}
         <div class="ms-3 d-flex align-items-center">
             <label class="form-label mb-0 me-2" style="white-space:nowrap;">Per halaman</label>
             <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('page-title', 'Master Klasifikasi')
 @section('page-subtitle', 'Kelola klasifikasi surat')
@@ -73,9 +73,7 @@
         <div class="text-muted">
             Menampilkan <strong>{{ $klasifikasi->firstItem() }}</strong> sampai <strong>{{ $klasifikasi->lastItem() }}</strong> dari <strong>{{ $klasifikasi->total() }}</strong> data
         </div>
-        <ul class="pagination ms-auto mb-0">
-            {{ $klasifikasi->app(request()->query())->links() }}
-        </ul>
+        {{ $klasifikasi->appends(request()->query())->links() }}
         <div class="ms-3 d-flex align-items-center">
             <label class="form-label mb-0 me-2" style="white-space:nowrap;">Per halaman</label>
             <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">

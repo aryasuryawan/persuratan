@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Surat Keputusan')
 
@@ -107,9 +107,7 @@
                 <div class="muted-count">
                     Menampilkan <strong>{{ $arsip->firstItem() }}</strong> sampai <strong>{{ $arsip->lastItem() }}</strong> dari <strong>{{ $arsip->total() }}</strong> data
                 </div>
-                <ul class="pagination ms-auto mb-0">
-                    {{ $arsip->app(request()->query())->links() }}
-                </ul>
+                {{ $arsip->appends(request()->query())->links() }}
                 <div class="d-flex align-items-center">
                     <label class="form-label mb-0 me-2" style="white-space:nowrap;">Per halaman</label>
                     <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">

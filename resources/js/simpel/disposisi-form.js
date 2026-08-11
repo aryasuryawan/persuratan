@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sectionLangsung = document.getElementById('section-langsung');
 
     if (!jenisPelaksana || !jenisLangsung) return;
+    if (!sectionPelaksana || !sectionLangsung) return;
 
     function toggleSections() {
         const pelaksanaChecked = document.querySelector('input[name="jenis"]:checked')?.value;

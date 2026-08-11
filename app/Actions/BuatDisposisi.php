@@ -102,7 +102,13 @@ class BuatDisposisi
             return;
         }
 
-        $jabatan = strtoupper(trim($atasNamaPimpinan?->jabatan ?? $dariUser->jabatan ?? 'PIMPINAN'));
+        $jabatan = strtoupper(trim(
+            $atasNamaPimpinan?->jabatan
+            ?? $atasNamaPimpinan?->title
+            ?? $surat->tujuanPimpinan?->jabatan
+            ?? $surat->tujuanPimpinan?->title
+            ?? 'PIMPINAN'
+        ));
         $subject = "DISPOSISI {$jabatan}: {$surat->perihal}";
         $body = $this->buildEmailBody($surat, $disposisi, $dariUser, $atasNamaPimpinan, $kepadaUser, $disposisiKepada, $catatan, $catatanPimpinan, $instruksi, $tanggalDeadline);
 
@@ -237,7 +243,7 @@ class BuatDisposisi
         $lembagaNama = \App\Models\Setting::get('lembaga_nama', 'Yayasan Dompet Dhuafa Republika');
         $appLogo = \App\Models\Setting::get('app_logo');
         $appLogoUrl = $appLogo ? \Illuminate\Support\Facades\Storage::disk('public')->url($appLogo) : null;
-        $appUrl = config('app.url');
+        $appUrl = rtrim(config('app.url'), '/');
 
         $nomorAgenda = $surat->nomor_agenda;
         $nomorSurat = $surat->nomor_surat ?? '-';

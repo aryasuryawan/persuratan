@@ -1,6 +1,14 @@
 <x-guest-layout>
     @section('title', 'Lapor Follow Up Disposisi')
 
+    <div class="text-center mb-4">
+        @if(\App\Models\Setting::get('app_logo'))
+        <a href="/" class="navbar-brand navbar-brand-autodark">
+            <img src="{{ \Storage::disk('public')->url(\App\Models\Setting::get('app_logo')) }}" alt="{{ \App\Models\Setting::get('app_name', 'SiMPEL') }}" style="height: 32px;">
+        </a>
+        @endif
+    </div>
+
     <div class="card card-md">
         <div class="card-body">
             <h2 class="h2 text-center mb-1">Lapor Follow Up Disposisi</h2>

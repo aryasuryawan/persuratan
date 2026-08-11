@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('page-title', 'Pengaturan')
 
@@ -116,7 +116,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Copyright Footer</label>
-                        <input type="text" name="footer_copyright" class="form-control @error('footer_copyright') is-invalid @enderror" value="{{ old('footer_copyright', $settings['footer_copyright']->value ?? '') }}" placeholder="Contoh: © 2026 Nama Lembaga">
+                        <input type="text" name="footer_copyright" class="form-control @error('footer_copyright') is-invalid @enderror" value="{{ old('footer_copyright', $settings['footer_copyright']->value ?? '') }}" placeholder="Contoh: Â© 2026 Nama Lembaga">
                         @error('footer_copyright') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
@@ -364,7 +364,7 @@
                 <div class="card-body">
 
                     <div class="alert alert-info">
-                        <strong>AI Assistant:</strong> floating chat bubble untuk bertanya soal data surat/dokumen. Jawaban mengikuti hak akses (role) masing-masing user. API key disimpan di server — tidak pernah bocor ke browser.
+                        <strong>AI Assistant:</strong> floating chat bubble untuk bertanya soal data surat/dokumen. Jawaban mengikuti hak akses (role) masing-masing user. API key disimpan di server â€” tidak pernah bocor ke browser.
                     </div>
 
                     <div class="mb-3">
@@ -379,45 +379,45 @@
                     @php
                     $aiProviders = [
                         'xai' => [
-                            'label' => 'xAI (Grok) — berbayar',
+                            'label' => 'xAI (Grok) â€” berbayar',
                             'base_url' => 'https://api.x.ai/v1',
                             'key_placeholder' => 'xai-xxxxxxxxxxxx',
                             'key_hint' => 'Dapatkan dari <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a> &gt; API Keys. Semua model xAI berbayar.',
                             'models' => [
-                                'grok-4.3' => 'Grok 4.3 ($1.25/M input) — seimbang, default',
-                                'grok-4.5' => 'Grok 4.5 ($2.00/M input) — flagship',
-                                'grok-build-0.1' => 'Grok Build 0.1 ($1.00/M input) — coding/budget',
+                                'grok-4.3' => 'Grok 4.3 ($1.25/M input) â€” seimbang, default',
+                                'grok-4.5' => 'Grok 4.5 ($2.00/M input) â€” flagship',
+                                'grok-build-0.1' => 'Grok Build 0.1 ($1.00/M input) â€” coding/budget',
                             ],
                         ],
                         'groq' => [
-                            'label' => 'Groq (Llama/Gemma) — GRATIS',
+                            'label' => 'Groq (Llama/Gemma) â€” GRATIS',
                             'base_url' => 'https://api.groq.com/openai/v1',
                             'key_placeholder' => 'gsk_xxxxxxxxxxxx',
                             'key_hint' => 'Dapatkan dari <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a> &gt; API Keys. Free tier GRATIS dengan rate limit.',
                             'models' => [
-                                'llama-3.3-70b-versatile' => 'Llama 3.3 70B — gratis',
-                                'llama-3.1-8b-instant' => 'Llama 3.1 8B — gratis, cepat',
-                                'gemma-2-9b-it' => 'Gemma 2 9B — gratis, ringan',
+                                'llama-3.3-70b-versatile' => 'Llama 3.3 70B â€” gratis',
+                                'llama-3.1-8b-instant' => 'Llama 3.1 8B â€” gratis, cepat',
+                                'gemma-2-9b-it' => 'Gemma 2 9B â€” gratis, ringan',
                             ],
                         ],
                         'google' => [
-                            'label' => 'Google Gemini — GRATIS',
+                            'label' => 'Google Gemini â€” GRATIS',
                             'base_url' => 'https://generativelanguage.googleapis.com/v1beta/openai',
                             'key_placeholder' => 'AIzaSyxxxxxxxxxxxx',
                             'key_hint' => 'Dapatkan dari <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Free tier GRATIS, rate limit ketat.',
                             'models' => [
-                                'gemini-2.5-flash' => 'Gemini 2.5 Flash — gratis, cepat',
-                                'gemini-2.0-flash' => 'Gemini 2.0 Flash — gratis, hemat',
+                                'gemini-2.5-flash' => 'Gemini 2.5 Flash â€” gratis, cepat',
+                                'gemini-2.0-flash' => 'Gemini 2.0 Flash â€” gratis, hemat',
                             ],
                         ],
                         'openrouter' => [
-                            'label' => 'OpenRouter — ada model GRATIS',
+                            'label' => 'OpenRouter â€” ada model GRATIS',
                             'base_url' => 'https://openrouter.ai/api/v1',
                             'key_placeholder' => 'sk-or-xxxxxxxxxxxx',
                             'key_hint' => 'Dapatkan dari <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>. Model gratis pakai slug akhiran <code>:free</code>.',
                             'models' => [
-                                'meta-llama/llama-3.3-70b-instruct:free' => 'Llama 3.3 70B (:free) — gratis',
-                                'deepseek/deepseek-chat-v3-0324:free' => 'DeepSeek V3 (:free) — gratis',
+                                'meta-llama/llama-3.3-70b-instruct:free' => 'Llama 3.3 70B (:free) â€” gratis',
+                                'deepseek/deepseek-chat-v3-0324:free' => 'DeepSeek V3 (:free) â€” gratis',
                             ],
                         ],
                     ];
@@ -612,9 +612,7 @@
                 <div class="text-muted">
                     Menampilkan <strong>{{ $emailLogs->firstItem() }}</strong> sampai <strong>{{ $emailLogs->lastItem() }}</strong> dari <strong>{{ $emailLogs->total() }}</strong> data
                 </div>
-                <ul class="pagination ms-auto mb-0">
-                    {{ $emailLogs->appends(['tab' => 'log'])->links() }}
-                </ul>
+                {{ $emailLogs->appends(['tab' => 'log'])->links() }}
             </div>
             @endif
         </div>

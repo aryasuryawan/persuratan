@@ -96,7 +96,7 @@ class KirimReminderDisposisi extends Command
         $lembagaNama = Setting::get('lembaga_nama', 'Yayasan Dompet Dhuafa Republika');
         $appLogo = Setting::get('app_logo');
         $appLogoUrl = $appLogo ? \Illuminate\Support\Facades\Storage::disk('public')->url($appLogo) : null;
-        $appUrl = config('app.url');
+        $appUrl = rtrim(config('app.url'), '/');
         $detailUrl = $appUrl . '/penerimaan-surat/' . $surat->uuid;
         $followUpUrl = $appUrl . '/follow-up/' . $disposisi->uuid;
 
