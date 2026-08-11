@@ -10,7 +10,7 @@ use Throwable;
 
 class EmailService
 {
-    public function send(string $to, string $subject, string $body, array $data = [], array $attachments = []): array
+    public function send(string $to, string $subject, string $body, array $data = [], array $attachments = [], array $cc = []): array
     {
         $config = $this->getSmtpConfig();
 
@@ -37,10 +37,14 @@ class EmailService
         ]);
 
         try {
-            Mail::mailer($mailer)->html($body, function ($message) use ($to, $subject, $config, $attachments) {
+            Mail::mailer($mailer)->html($body, function ($message) use ($to, $subject, $config, $attachments, $cc) {
                 $message->to($to)
                     ->subject($subject)
                     ->from($config['from_address'], $config['from_name']);
+
+                if (!empty($cc)) {
+                    $message->cc(array_values($cc));
+                }
                 
                 foreach ($attachments as $attachment) {
                     $message->attach($attachment['path'], [

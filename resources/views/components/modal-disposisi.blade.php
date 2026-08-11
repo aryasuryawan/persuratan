@@ -78,6 +78,17 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">CC Email <small class="text-muted">(opsional)</small></label>
+                        <select name="cc[]" class="form-select" multiple id="cc-select">
+                            @foreach(\App\Models\User::where('is_active', true)->get() as $u)
+                            <option value="{{ $u->email }}">{{ $u->name }} @if($u->jabatan)({{ $u->jabatan }})@endif — {{ $u->email }}</option>
+                            @endforeach
+                        </select>
+                        <input type="text" name="cc_free" class="form-control mt-2" placeholder="Atau ketik email lain, pisahkan dengan koma (contoh: eksternal@contoh.com)">
+                        <small class="form-hint">Tahan Ctrl/Cmd untuk pilih multiple user, atau masukkan email eksternal. Mereka menerima salinan notifikasi disposisi.</small>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Catatan</label>
                         <textarea name="catatan" class="form-control" rows="3"></textarea>
                     </div>

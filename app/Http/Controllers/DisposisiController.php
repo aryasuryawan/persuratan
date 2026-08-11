@@ -55,8 +55,13 @@ class DisposisiController extends Controller
             'disposisi_kepada_free.*' => 'nullable|string',
             'disposisi_kepada_free_email' => 'nullable|array',
             'disposisi_kepada_free_email.*' => 'nullable|email',
+            'cc' => 'nullable|array',
+            'cc.*' => 'nullable|email',
+            'cc_free' => 'nullable|string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        $data['cc'] = $this->resolveCcEmails($data);
 
         // Merge freetext recipients (name + optional email) into disposisi_kepada.
         // Nama+email yang belum terdaftar otomatis dibuat sebagai user baru.
@@ -112,6 +117,7 @@ class DisposisiController extends Controller
             instruksi: $data['instruksi'] ?? null,
             disposisiKepada: $data['disposisi_kepada'] ?? null,
             lampiran: $request->file('lampiran', []),
+            ccEmails: $data['cc'],
         );
 
         return redirect()->route('penerimaan-surat.show', $surat->uuid)
@@ -170,6 +176,31 @@ class DisposisiController extends Controller
         }
 
         return array_values(array_unique($names));
+    }
+
+    private function resolveCcEmails(array $data): array
+    {
+        $emails = array_filter($data['cc'] ?? [], fn($e) => is_string($e) && trim($e) !== '');
+
+        $free = trim($data['cc_free'] ?? '');
+        if ($free !== '') {
+            $parts = preg_split('/[,\s]+/', $free) ?: [];
+            foreach ($parts as $part) {
+                if (trim($part) !== '') {
+                    $emails[] = trim($part);
+                }
+            }
+        }
+
+        $valid = [];
+        foreach ($emails as $email) {
+            $email = strtolower(trim($email));
+            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $valid[] = $email;
+            }
+        }
+
+        return array_values(array_unique($valid));
     }
 
     public function pindah(Request $request, Disposisi $disposisi)

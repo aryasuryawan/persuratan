@@ -29,6 +29,7 @@ class BuatDisposisi
         ?array $instruksi = null,
         ?array $disposisiKepada = null,
         array $lampiran = [],
+        array $ccEmails = [],
     ): Disposisi {
         $statusKe = $jenis === 'ke_pelaksana' ? 'assigned' : 'handled_by_leadership';
 
@@ -77,7 +78,7 @@ class BuatDisposisi
             disposisiId: $disposisi->id,
         ));
 
-        $this->sendNotifications($surat, $disposisi, $dariUser, $atasNamaPimpinan, $kepadaUser, $disposisiKepada, $catatan, $catatanPimpinan, $instruksi, $tanggalDeadline);
+        $this->sendNotifications($surat, $disposisi, $dariUser, $atasNamaPimpinan, $kepadaUser, $disposisiKepada, $catatan, $catatanPimpinan, $instruksi, $tanggalDeadline, $ccEmails);
 
         return $disposisi;
     }
@@ -92,7 +93,8 @@ class BuatDisposisi
         ?string $catatan,
         ?string $catatanPimpinan,
         ?array $instruksi,
-        ?string $tanggalDeadline
+        ?string $tanggalDeadline,
+        array $ccEmails = []
     ): void {
         $recipients = $this->buildRecipients($surat, $kepadaUser, $disposisiKepada);
         
@@ -100,8 +102,11 @@ class BuatDisposisi
             return;
         }
 
-        $subject = "Disposisi Baru: {$surat->nomor_agenda} - {$surat->perihal}";
+        $jabatan = strtoupper(trim($atasNamaPimpinan?->jabatan ?? $dariUser->jabatan ?? 'PIMPINAN'));
+        $subject = "DISPOSISI {$jabatan}: {$surat->perihal}";
         $body = $this->buildEmailBody($surat, $disposisi, $dariUser, $atasNamaPimpinan, $kepadaUser, $disposisiKepada, $catatan, $catatanPimpinan, $instruksi, $tanggalDeadline);
+
+        $cc = $this->buildCcEmails($recipients, $ccEmails);
 
         // Fetch surat lampiran untuk attachment
         $attachments = [];
@@ -130,9 +135,29 @@ class BuatDisposisi
                     'recipient_user_id' => $recipient['user_id'] ?? null,
                     'recipient_name' => $recipient['name'],
                 ],
-                $attachments
+                $attachments,
+                $cc
             );
         }
+    }
+
+    private function buildCcEmails(array $recipients, array $ccEmails): array
+    {
+        $recipientEmails = array_map(fn($r) => strtolower(trim($r['email'])), $recipients);
+        $cc = [];
+
+        foreach ($ccEmails as $email) {
+            $email = strtolower(trim((string) $email));
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            if (in_array($email, $recipientEmails)) {
+                continue;
+            }
+            $cc[] = $email;
+        }
+
+        return array_values(array_unique($cc));
     }
 
     private function buildRecipients(SuratMasuk $surat, ?User $kepadaUser, ?array $disposisiKepada): array
