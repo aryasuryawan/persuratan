@@ -6,6 +6,9 @@
 @import "@tabler/core/dist/css/tabler-flags.min.css";
 @import "@tabler/icons-webfont/dist/tabler-icons.min.css";
 
+/* Prevent whole-page horizontal scroll; nested .table-wrap scrolls itself */
+body { overflow-x: hidden; }
+
 :root {
     --tblr-primary: #099a97;
     --tblr-primary-rgb: 9, 154, 151;
@@ -64,6 +67,17 @@
     font-size: 0.875rem;
 }
 
+/* Mobile: stack action buttons vertically */
+@media (max-width: 768px) {
+    .action-card .btn-list {
+        gap: 0.5rem;
+    }
+
+    .action-card .btn {
+        width: 100%;
+    }
+}
+
 .table-card .table th {
     font-size: 0.75rem;
     font-weight: 600;
@@ -75,3 +89,55 @@
 
 [data-bs-theme="light"] .theme-icon-dark { display: none; }
 [data-bs-theme="dark"]  .theme-icon-light { display: none; }
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 768px) {
+    /* Prevent whole-page horizontal scroll; nested table-wrap scrolls itself */
+
+    /* Dashboard grid */
+    .simpel-dash .grid-2col { grid-template-columns: 1fr !important; }
+    .simpel-dash .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+    .simpel-dash .page-head { flex-direction: column; align-items: flex-start; }
+    .simpel-dash .date-chip { align-self: flex-start; }
+
+    /* Horizontal scroll for ALL tables */
+    .table-responsive,
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+    }
+    .table-responsive table,
+    .table-wrap table {
+        min-width: 560px;
+    }
+    .table-responsive th, .table-responsive td,
+    .table-wrap th, .table-wrap td {
+        white-space: nowrap;
+    }
+
+    /* Compact table */
+    .table th, .table td {
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.8rem;
+    }
+
+    /* Compact stat cards */
+    .stat-card .card-body { padding: 0.75rem; }
+    .stat-card .h1 { font-size: 1.5rem; }
+
+    /* Stack page header */
+    .page-header .row { flex-direction: column; }
+    .page-header .col-auto { margin-top: 0.5rem; }
+
+    /* Compact card headers */
+    .card-header { flex-wrap: wrap; gap: 0.5rem; }
+
+    /* Stack filter forms */
+    .card-body .d-flex.flex-wrap { flex-direction: column; }
+    .card-body .d-flex.flex-wrap > * {
+        width: 100% !important;
+        min-width: unset !important;
+        max-width: unset !important;
+    }
+}

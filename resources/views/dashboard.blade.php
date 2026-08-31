@@ -38,7 +38,7 @@
         --radius-lg:14px; --radius-md:12px; --radius-sm:8px;
         --shadow-card:0 1px 2px rgba(16,40,34,.05), 0 8px 24px -16px rgba(16,40,34,.16);
     }
-    .simpel-dash{color:var(--ink-900); font-size:14px; -webkit-font-smoothing:antialiased;}
+    .simpel-dash{color:var(--ink-900); font-size:14px; -webkit-font-smoothing:antialiased; max-width:100%;}
     .simpel-dash h1,.simpel-dash h2,.simpel-dash h3{font-weight:700; color:var(--ink-900);}
     .simpel-dash a{color:inherit; text-decoration:none;}
     .simpel-dash .icon{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0;}
@@ -71,6 +71,7 @@
 
     /* grid */
     .simpel-dash .grid-2col{display:grid; grid-template-columns:2fr 1fr; gap:1.15rem; align-items:start;}
+    .simpel-dash .grid-2col > *{min-width:0;}
 
     /* card */
     .simpel-dash .card{background:var(--paper-0); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow-card); margin-bottom:1.15rem;}
@@ -81,10 +82,10 @@
     .simpel-dash .card-link:hover{background:var(--teal-100);}
 
     /* table */
-    .simpel-dash .table-wrap{overflow-x:auto;}
-    .simpel-dash table{width:100%; border-collapse:collapse; font-size:.85rem;}
-    .simpel-dash thead th{text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-400); font-weight:700; padding:.7rem 1.2rem; border-bottom:1px solid var(--line); white-space:nowrap;}
-    .simpel-dash tbody td{padding:.85rem 1.2rem; border-bottom:1px solid var(--line); color:var(--ink-700); vertical-align:middle;}
+    .simpel-dash .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+    .simpel-dash table{width:100%; border-collapse:collapse; font-size:.85rem; table-layout:auto;}
+    .simpel-dash thead th{text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-400); font-weight:700; padding:.7rem 1rem; border-bottom:1px solid var(--line); white-space:nowrap;}
+    .simpel-dash tbody td{padding:.7rem 1rem; border-bottom:1px solid var(--line); color:var(--ink-700); vertical-align:middle; white-space:nowrap;}
     .simpel-dash tbody tr:last-child td{border-bottom:none;}
     .simpel-dash tbody tr:hover{background:var(--paper-50);}
     .simpel-dash .agenda-chip{font-size:.76rem; font-weight:600; background:var(--paper-100); color:var(--ink-700); padding:.22rem .5rem; border-radius:6px; letter-spacing:-.2px;}
@@ -134,6 +135,23 @@
 
     @media (max-width:1100px){ .simpel-dash .kpi-grid{grid-template-columns:repeat(2,1fr);} .simpel-dash .grid-2col{grid-template-columns:1fr;} }
     @media (max-width:560px){ .simpel-dash .kpi-grid{grid-template-columns:1fr;} }
+
+    /* Dashboard table mobile responsive */
+    @media (max-width:768px){
+        .simpel-dash .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; display:block;}
+        .simpel-dash table{min-width:560px;}
+        .simpel-dash thead th{padding:.5rem .6rem; font-size:.68rem; text-transform:none; letter-spacing:0; white-space:nowrap;}
+        .simpel-dash tbody td{padding:.5rem .6rem; font-size:.78rem; white-space:nowrap;}
+        .simpel-dash .cell-title{max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+        .simpel-dash .agenda-chip{font-size:.7rem; padding:.15rem .4rem;}
+        .simpel-dash .status{font-size:.7rem; padding:.2rem .4rem .2rem .35rem;}
+        .simpel-dash .go-btn{width:26px; height:26px;}
+        .simpel-dash .go-btn .icon{width:14px; height:14px;}
+        .simpel-dash .card-head{padding:.8rem 1rem;}
+        .simpel-dash .card-title{font-size:.88rem;}
+        .simpel-dash .card-link{font-size:.72rem;}
+        .simpel-dash .tag{font-size:.65rem; padding:.2rem .4rem;}
+    }
 </style>
 
 <div class="simpel-dash">
