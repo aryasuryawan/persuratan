@@ -14,7 +14,7 @@
 <body class="border-top-wide border-primary">
 <div class="page page-center">
     <div class="container container-tight py-4">
-        @yield('content')
+        {{ $slot }}
     </div>
 </div>
 @stack('scripts')
