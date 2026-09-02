@@ -8,7 +8,8 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="{{ route('penerimaan-surat.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('penerimaan-surat.store') }}" enctype="multipart/form-data"
+              x-data="aksesPembuatPimpinan({{ $rahasiaKlasifikasiIds->map(fn($id) => (int) $id)->toJson() }}, {{ old('klasifikasi_id') ?: 'null' }}, false)">
             @csrf
 
             <div class="mb-3">
@@ -37,7 +38,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label required">Klasifikasi</label>
-                    <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror" required>
+                    <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror" required x-model="klasifikasiId">
                         <option value="">-- Pilih --</option>
                         @foreach($klasifikasi as $k)
                         <option value="{{ $k->id }}" {{ old('klasifikasi_id') == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
@@ -82,6 +83,14 @@
                 </select>
                 <small class="form-hint">Pilih pimpinan yang dituju surat ini. Sekretaris akan disposisikan atas nama pimpinan ini.</small>
                 @error('tujuan_pimpinan_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mb-3" x-show="isRahasia" x-cloak>
+                <label class="form-check">
+                    <input class="form-check-input" type="checkbox" name="hanya_pembuat_pimpinan" value="1" x-model="hanyaPembuatPimpinan">
+                    <span class="form-check-label">Hanya dapat diakses pembuat dan pimpinan</span>
+                </label>
+                <small class="form-hint text-warning">Jika dicentang, surat rahasia ini hanya dapat dilihat oleh pembuatnya, pimpinan terkait, sekretaris yang melayani pimpinan tersebut, dan administrator.</small>
             </div>
 
             <div class="row">
@@ -138,6 +147,17 @@ function topikChips(topiks, initial = []) {
         removeTopik(id) {
             this.selectedTopiks = this.selectedTopiks.filter(t => t.id !== id);
             this.topikIds = this.topikIds.filter(i => i !== id);
+        }
+    }
+}
+
+function aksesPembuatPimpinan(rahasiaIds = [], klasifikasiId = null, hanyaPembuatPimpinan = false) {
+    return {
+        rahasiaIds: (rahasiaIds || []).map(Number),
+        klasifikasiId: klasifikasiId ? parseInt(klasifikasiId) : '',
+        hanyaPembuatPimpinan: !!hanyaPembuatPimpinan,
+        get isRahasia() {
+            return this.rahasiaIds.includes(parseInt(this.klasifikasiId));
         }
     }
 }

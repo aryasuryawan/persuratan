@@ -21,6 +21,7 @@ class SuratMasuk extends Model
         'tanggal_surat', 'tanggal_diterima', 'lampiran', 'klasifikasi_id',
         'tujuan_pimpinan_id', 'status_id', 'lampiran_path', 'created_by',
         'verified_by', 'verified_at', 'completed_at', 'notes',
+        'hanya_pembuat_pimpinan',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class SuratMasuk extends Model
             'lampiran' => 'array',
             'verified_at' => 'datetime',
             'completed_at' => 'datetime',
+            'hanya_pembuat_pimpinan' => 'boolean',
         ];
     }
 

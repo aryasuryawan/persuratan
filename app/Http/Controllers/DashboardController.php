@@ -17,7 +17,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user);
+        $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user, true);
         $ids = statusIds();
 
         $statusCounts = (clone $suratQuery)
@@ -46,6 +46,8 @@ class DashboardController extends Controller
             ->pluck('jumlah', 'tanggal_diterima')
             ->map(fn ($c) => (int) $c);
 
+        $suratKeluarQuery = $scope->scopeSuratKeluarForUser(SuratKeluar::query(), $user, true);
+
         $data = [
             'totalSuratMasuk' => $totalSuratMasuk,
             'perluVerifikasi' => $perluVerifikasi,
@@ -54,9 +56,10 @@ class DashboardController extends Controller
             'persenSelesai' => $persenSelesai,
             'suratHariIni' => $daily[today()->toDateString()] ?? 0,
             'suratKemarin' => $daily[today()->subDay()->toDateString()] ?? 0,
-            'suratTerbaru' => (clone $suratQuery)->with(['status', 'klasifikasi'])
+            'suratTerbaru' => $scope->scopeForUser(SuratMasuk::query(), $user)
+                ->with(['status', 'klasifikasi'])
                 ->latest('tanggal_diterima')->take(5)->get(),
-            'suratKeluar' => SuratKeluar::query()->withoutTrashed()->count(),
+            'suratKeluar' => $suratKeluarQuery->withoutTrashed()->count(),
             'komitePersetujuan' => KomitePersetujuan::count(),
             'notulensiRapim' => NotulensiRapim::count(),
             'suratKeputusan' => SuratKeputusan::count(),
@@ -88,7 +91,7 @@ class DashboardController extends Controller
     public function dashboard2(SuratScopeService $scope)
     {
         $user = Auth::user();
-        $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user);
+        $suratQuery = $scope->scopeForUser(SuratMasuk::query(), $user, true);
         $ids = statusIds();
 
         $statusCounts = (clone $suratQuery)
@@ -150,7 +153,8 @@ class DashboardController extends Controller
         }
 
         // Recent letters for table
-        $suratTerbaru = (clone $suratQuery)->with(['status', 'klasifikasi'])
+        $suratTerbaru = $scope->scopeForUser(SuratMasuk::query(), $user)
+            ->with(['status', 'klasifikasi'])
             ->latest('tanggal_diterima')->take(6)->get();
 
         return view('dashboard2', [

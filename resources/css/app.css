@@ -9,6 +9,8 @@
 /* Prevent whole-page horizontal scroll; nested .table-wrap scrolls itself */
 body { overflow-x: hidden; }
 
+[x-cloak] { display: none !important; }
+
 :root {
     --tblr-primary: #099a97;
     --tblr-primary-rgb: 9, 154, 151;

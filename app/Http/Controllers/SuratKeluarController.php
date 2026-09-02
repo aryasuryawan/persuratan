@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class SuratKeluarController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, \App\Services\SuratScopeService $scope)
     {
         $this->authorize('viewAny', SuratKeluar::class);
         $user = Auth::user();
@@ -24,6 +24,7 @@ class SuratKeluarController extends Controller
         if ($request->ajax()) {
             $filters = $request->only(['search', 'klasifikasi_id', 'topik_id', 'kode_surat_id']);
             $query = SuratKeluar::with(['klasifikasi', 'pembuat', 'kodeSurat', 'topiks']);
+            $query = $scope->scopeSuratKeluarForUser($query, $user);
 
             if (!empty($filters['search'])) {
                 $s = $filters['search'];
@@ -65,6 +66,7 @@ class SuratKeluarController extends Controller
         $kodeSurats = \App\Models\KodeSurat::where('aktif', true)->get();
 
         $baseQuery = SuratKeluar::query();
+        $baseQuery = $scope->scopeSuratKeluarForUser($baseQuery, $user, true);
         $total = (clone $baseQuery)->count();
         $hariIni = (clone $baseQuery)->whereDate('created_at', today())->count();
 
@@ -82,7 +84,8 @@ class SuratKeluarController extends Controller
         $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
             ->where('is_active', true)
             ->get(['id', 'name', 'jabatan', 'title']);
-        return view('surat-keluar.create', compact('klasifikasi', 'topiks', 'suratMasuk', 'kodeSurats', 'pimpinanList'));
+        $rahasiaKlasifikasiIds = $klasifikasi->filter(fn($k) => $k->isRahasia())->pluck('id')->values();
+        return view('surat-keluar.create', compact('klasifikasi', 'topiks', 'suratMasuk', 'kodeSurats', 'pimpinanList', 'rahasiaKlasifikasiIds'));
     }
 
     public function store(Request $request)
@@ -111,6 +114,7 @@ class SuratKeluarController extends Controller
         ]);
 
         $data['created_by'] = Auth::id();
+        $data['hanya_pembuat_pimpinan'] = $request->boolean('hanya_pembuat_pimpinan');
         $topikIds = $data['topik_ids'] ?? [];
         unset($data['topik_ids']);
 
@@ -185,7 +189,9 @@ class SuratKeluarController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'jabatan', 'title']);
 
-        return view('surat-keluar.edit', compact('surat', 'klasifikasi', 'topiks', 'selectedTopiks', 'suratMasuk', 'kodeSurats', 'pimpinanList'));
+        $rahasiaKlasifikasiIds = $klasifikasi->filter(fn($k) => $k->isRahasia())->pluck('id')->values();
+
+        return view('surat-keluar.edit', compact('surat', 'klasifikasi', 'topiks', 'selectedTopiks', 'suratMasuk', 'kodeSurats', 'pimpinanList', 'rahasiaKlasifikasiIds'));
     }
 
     public function update(Request $request, string $uuid)
@@ -219,6 +225,7 @@ class SuratKeluarController extends Controller
 
         $topikIds = $data['topik_ids'] ?? [];
         unset($data['topik_ids']);
+        $data['hanya_pembuat_pimpinan'] = $request->boolean('hanya_pembuat_pimpinan');
 
         $lampiranBaru = [];
         $files = $request->file('lampiran');
@@ -313,6 +320,11 @@ class SuratKeluarController extends Controller
     public function restore(string $uuid)
     {
         $surat = SuratKeluar::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! Auth::user()->isCreatorOrAdmin($surat->created_by)) {
+            abort(403, 'Anda tidak berhak memulihkan surat ini.');
+        }
+
         $surat->restore();
 
         return redirect()->route('surat-keluar.show', $uuid)
@@ -322,6 +334,10 @@ class SuratKeluarController extends Controller
     public function forceDelete(string $uuid)
     {
         $surat = SuratKeluar::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! Auth::user()->isCreatorOrAdmin($surat->created_by)) {
+            abort(403, 'Anda tidak berhak menghapus permanen surat ini.');
+        }
 
         // Cleanup JSON lampiran files from disk
         if ($surat->lampiran) {

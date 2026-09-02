@@ -91,7 +91,7 @@ class SuratMasukRestrictedAccessTest extends TestCase
         return $sekretaris;
     }
 
-    public function test_sekretaris_tidak_proxy_tidak_bisa_lihat_restricted(): void
+    public function test_sekretaris_pembuat_bisa_lihat_restricted(): void
     {
         $pimpinan = User::factory()->create(['role_id' => $this->pimpinanRole->id]);
         $sekretaris = User::factory()->create(['role_id' => $this->sekretarisRole->id]);
@@ -101,7 +101,7 @@ class SuratMasukRestrictedAccessTest extends TestCase
         $this->actingAs($sekretaris);
         $response = $this->get('/penerimaan-surat/' . $surat->uuid);
 
-        $response->assertForbidden();
+        $response->assertOk();
     }
 
     public function test_sekretaris_proxy_bisa_lihat_restricted(): void

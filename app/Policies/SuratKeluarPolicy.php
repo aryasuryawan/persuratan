@@ -14,7 +14,23 @@ class SuratKeluarPolicy
 
     public function view(User $user, SuratKeluar $suratKeluar): bool
     {
-        return $user->hasPermission('surat-keluar.show');
+        if (! $user->hasPermission('surat-keluar.show')) {
+            return false;
+        }
+
+        if ($suratKeluar->hanya_pembuat_pimpinan) {
+            if ($user->hasRole('admin') || $suratKeluar->created_by === $user->id) {
+                return true;
+            }
+
+            if ($suratKeluar->pimpinan_pengirim_id === $user->id) {
+                return true;
+            }
+
+            return $user->hasRole('sekretaris') && $user->servesPimpinan($suratKeluar->pimpinan_pengirim_id);
+        }
+
+        return true;
     }
 
     public function create(User $user): bool
@@ -29,6 +45,6 @@ class SuratKeluarPolicy
 
     public function delete(User $user, SuratKeluar $suratKeluar): bool
     {
-        return $user->hasPermission('surat-keluar.delete');
+        return $user->isCreatorOrAdmin($suratKeluar->created_by);
     }
 }

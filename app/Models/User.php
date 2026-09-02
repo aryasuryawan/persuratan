@@ -75,6 +75,28 @@ class User extends Authenticatable
         return $this->role?->kode === $kode;
     }
 
+    public function servesPimpinan(?int $pimpinanId): bool
+    {
+        if (!$pimpinanId) {
+            return false;
+        }
+
+        return $this->pimpinanYangDilayani()
+            ->where('pimpinan_id', $pimpinanId)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isCreatorOrAdmin(?int $recordCreatorId): bool
+    {
+        return $this->isAdmin() || ($recordCreatorId !== null && $this->id === $recordCreatorId);
+    }
+
     public function hasPermission(string $permissionKode): bool
     {
         if ($this->hasRole('admin')) {

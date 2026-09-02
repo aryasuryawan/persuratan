@@ -16,6 +16,7 @@ class SuratKeluar extends Model
     protected $fillable = [
         'uuid', 'nomor_surat', 'tujuan_surat', 'perihal', 'tanggal_surat',
         'lampiran', 'klasifikasi_id', 'pimpinan_pengirim_id', 'kode_surat_id', 'surat_masuk_id', 'created_by',
+        'hanya_pembuat_pimpinan',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class SuratKeluar extends Model
         return [
             'tanggal_surat' => 'date',
             'lampiran' => 'array',
+            'hanya_pembuat_pimpinan' => 'boolean',
         ];
     }
 

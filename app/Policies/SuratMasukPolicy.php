@@ -19,18 +19,16 @@ class SuratMasukPolicy
 
     public function update(User $user, SuratMasuk $suratMasuk): bool
     {
-        if ($user->hasRole('admin') || $user->hasRole('sekretaris')) {
+        if ($user->hasRole('admin') || $user->id === $suratMasuk->created_by) {
             return true;
         }
 
+        if ($suratMasuk->hanya_pembuat_pimpinan) {
+            return $this->pimpinanTerkait($user, $suratMasuk);
+        }
+
         if ($user->hasRole('sekretaris')) {
-            return $suratMasuk->disposisi()->whereNotNull('atas_nama_pimpinan_id')->whereExists(function ($sub) use ($user) {
-                $sub->selectRaw(1)
-                    ->from('sekretaris_pimpinan as sp')
-                    ->whereRaw('sp.pimpinan_id = disposisi.atas_nama_pimpinan_id')
-                    ->where('sp.sekretaris_id', $user->id)
-                    ->where('sp.is_active', true);
-            })->exists();
+            return true;
         }
 
         return $user->id === $suratMasuk->created_by;
@@ -38,7 +36,7 @@ class SuratMasukPolicy
 
     public function delete(User $user, SuratMasuk $suratMasuk): bool
     {
-        return $user->hasPermission('surat-masuk.delete');
+        return $user->isCreatorOrAdmin($suratMasuk->created_by);
     }
 
     public function view(User $user, SuratMasuk $suratMasuk): bool
@@ -47,8 +45,16 @@ class SuratMasukPolicy
             return false;
         }
 
+        if ($suratMasuk->hanya_pembuat_pimpinan) {
+            return $this->pimpinanTerkait($user, $suratMasuk) || $user->id === $suratMasuk->created_by;
+        }
+
         if ($suratMasuk->klasifikasi->kode === 'TERBATAS') {
             if ($user->hasRole('admin')) {
+                return true;
+            }
+
+            if ($suratMasuk->created_by === $user->id && $user->hasRole('sekretaris')) {
                 return true;
             }
 
@@ -113,6 +119,43 @@ class SuratMasukPolicy
                         ->where('sp.is_active', true);
                 });
             })->exists();
+        }
+
+        return false;
+    }
+
+    protected function pimpinanTerkait(User $user, SuratMasuk $suratMasuk): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($suratMasuk->tujuan_pimpinan_id === $user->id) {
+            return true;
+        }
+
+        if ($suratMasuk->disposisi()->where('atas_nama_pimpinan_id', $user->id)->exists()) {
+            return true;
+        }
+
+        if ($suratMasuk->punyaAksesManual($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('sekretaris')) {
+            if ($user->servesPimpinan($suratMasuk->tujuan_pimpinan_id)) {
+                return true;
+            }
+
+            $pimpinanDisposisi = $suratMasuk->disposisi()
+                ->whereNotNull('atas_nama_pimpinan_id')
+                ->pluck('atas_nama_pimpinan_id');
+
+            foreach ($pimpinanDisposisi as $pimpinanId) {
+                if ($user->servesPimpinan($pimpinanId)) {
+                    return true;
+                }
+            }
         }
 
         return false;

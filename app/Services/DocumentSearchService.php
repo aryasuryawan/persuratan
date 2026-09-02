@@ -125,7 +125,9 @@ class DocumentSearchService
             return $this->noAccess();
         }
 
-        $query = SuratKeluar::where($this->keywordWhere(
+        $query = SuratKeluar::query();
+        $query = $this->suratScope->scopeSuratKeluarForUser($query, $user);
+        $query->where($this->keywordWhere(
             ['nomor_surat', 'perihal', 'tujuan_surat'],
             $keyword
         ));
@@ -200,6 +202,8 @@ class DocumentSearchService
               ->orWhere(function ($qr) use ($user) {
                   $qr->whereHas('klasifikasi', fn ($kl) => $kl->where('kode', 'TERBATAS'))
                      ->where(function ($ra) use ($user) {
+                         $ra->orWhere('created_by', $user->id);
+
                          $ra->orWhereHas('disposisi', fn ($d) =>
                              $d->where('atas_nama_pimpinan_id', $user->id)
                          );
