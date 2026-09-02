@@ -13,19 +13,19 @@ class AksesKlasifikasiService
             return true;
         }
 
-        if (!$klasifikasi->is_rahasia) {
+        if (!$klasifikasi->isRahasia()) {
             return true;
         }
 
-        return $user->can('master.klasifikasi.index');
+        return $user->hasPermission('master.klasifikasi.index');
     }
 
     public function getVisibleKlasifikasi(User $user)
     {
         $query = Klasifikasi::query();
 
-        if (!$user->can('master.klasifikasi.index')) {
-            $query->where('is_rahasia', false);
+        if (!$user->hasPermission('master.klasifikasi.index')) {
+            $query->where('is_rahasia', false)->orWhere('kode', 'UMUM');
         }
 
         return $query->get();

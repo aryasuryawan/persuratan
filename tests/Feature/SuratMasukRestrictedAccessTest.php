@@ -42,14 +42,14 @@ class SuratMasukRestrictedAccessTest extends TestCase
         StatusSurat::create(['kode' => 'verified', 'label' => 'Diverifikasi', 'urutan' => 2]);
 
         $this->restrictedKlasifikasi = Klasifikasi::create([
-            'kode' => 'restricted',
-            'nama' => 'Restricted',
+            'kode' => 'TERBATAS',
+            'nama' => 'Terbatas',
             'is_rahasia' => true,
         ]);
 
         $this->normalKlasifikasi = Klasifikasi::create([
-            'kode' => 'normal',
-            'nama' => 'Normal',
+            'kode' => 'UMUM',
+            'nama' => 'Umum',
             'is_rahasia' => false,
         ]);
     }

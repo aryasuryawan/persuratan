@@ -14,7 +14,7 @@ class ArsipAksesService
         }
 
         return $query->where(function ($q) use ($user) {
-            $q->where('is_rahasia', false);
+            $q->whereHas('klasifikasi', fn ($kl) => $kl->where('is_rahasia', false));
 
             if (! $user->hasRole('cc_security')) {
                 $q->orWhereHas('aksesManual', fn ($a) => $a->where('user_id', $user->id));

@@ -9,17 +9,19 @@ use App\Concerns\PunyaRiwayatArsip;
 use App\Models\Klasifikasi;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class KomitePersetujuan extends Model
 {
-    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip;
+    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip, SoftDeletes;
 
     protected $table = 'komite_persetujuan';
 
     protected $fillable = [
         'uuid', 'judul', 'jenis', 'kategori', 'klasifikasi_id', 'tanggal_rapat', 'daftar_peserta',
-        'nilai_pembelian', 'hasil', 'catatan_keputusan', 'is_rahasia',
+        'nilai_pembelian', 'hasil', 'catatan_keputusan',
         'dicatat_oleh_id',
     ];
 
@@ -28,7 +30,6 @@ class KomitePersetujuan extends Model
         return [
             'tanggal_rapat' => 'date',
             'nilai_pembelian' => 'decimal:2',
-            'is_rahasia' => 'boolean',
         ];
     }
 
@@ -54,6 +55,16 @@ class KomitePersetujuan extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(Klasifikasi::class);
+    }
+
+    public function topiks(): MorphToMany
+    {
+        return $this->morphToMany(Topik::class, 'document', 'document_topik');
+    }
+
+    public function getIsRahasiaAttribute(): bool
+    {
+        return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
     }
 
     protected function labelsRiwayat(): array

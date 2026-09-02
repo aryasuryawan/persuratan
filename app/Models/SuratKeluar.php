@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -37,6 +38,16 @@ class SuratKeluar extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(Klasifikasi::class);
+    }
+
+    public function topiks(): MorphToMany
+    {
+        return $this->morphToMany(Topik::class, 'document', 'document_topik');
+    }
+
+    public function getIsRahasiaAttribute(): bool
+    {
+        return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
     }
 
     public function pimpinanPengirim(): BelongsTo

@@ -12,7 +12,7 @@
             <div class="page-pretitle">Surat Keluar</div>
             <h2 class="page-title d-flex align-items-center gap-2 flex-wrap">
                 {{ $surat->perihal }}
-                @if($surat->klasifikasi && $surat->klasifikasi->kode === 'restricted')
+                @if($surat->klasifikasi && $surat->klasifikasi->kode === 'TERBATAS')
                 <span class="badge bg-dark-lt text-dark"><i class="ti ti-shield-lock icon icon-1 me-1"></i>Restricted</span>
                 @endif
             </h2>
@@ -93,6 +93,14 @@
                             <x-badge-klasifikasi :klasifikasi="$surat->klasifikasi" />
                         </div>
                     </div>
+                    @if($surat->topiks->count() > 0)
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Topik</div>
+                        <div class="datagrid-content">
+                            <x-badge-topik :topiks="$surat->topiks" />
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

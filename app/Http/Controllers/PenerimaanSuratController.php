@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Klasifikasi;
 use App\Models\StatusSurat;
 use App\Models\SuratMasuk;
+use App\Models\Topik;
 use App\Services\AksesKlasifikasiService;
 use App\Services\SuratScopeService;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class PenerimaanSuratController extends Controller
         $user = Auth::user();
 
         if ($request->ajax()) {
-            $filters = $request->only(['search', 'status']);
+            $filters = $request->only(['search', 'status', 'klasifikasi_id', 'topik_id']);
             $surat = $scope->listSuratMasuk($user, $filters);
 
             $data = $surat->through(fn($s) => [
@@ -34,12 +35,15 @@ class PenerimaanSuratController extends Controller
                 'status_label' => $s->status->label,
                 'klasifikasi' => $s->klasifikasi->nama,
                 'klasifikasi_color' => $s->klasifikasi->color,
+                'topiks' => $s->topiks->map(fn($t) => ['nama' => $t->nama, 'color' => $t->color])->toArray(),
             ]);
 
             return response()->json($data);
         }
 
         $statuses = StatusSurat::orderBy('urutan')->get();
+        $klasifikasi = Klasifikasi::orderBy('nama')->get();
+        $topiks = Topik::orderBy('nama')->get();
 
         $baseQuery = SuratMasuk::query();
         $baseQuery = $scope->scopeForUser($baseQuery, $user);
@@ -52,23 +56,31 @@ class PenerimaanSuratController extends Controller
             ->pluck('jumlah', 'kode');
         $hariIni = (clone $baseQuery)->whereDate('created_at', today())->count();
 
-        return view('penerimaan-surat.index', compact('statuses', 'total', 'perStatus', 'hariIni'));
+        return view('penerimaan-surat.index', compact('statuses', 'total', 'perStatus', 'hariIni', 'klasifikasi', 'topiks'));
     }
 
     public function create(AksesKlasifikasiService $akses)
     {
         $klasifikasi = $akses->getVisibleKlasifikasi(Auth::user());
+        $topiks = Topik::orderBy('nama')->get();
         $organisasiList = \App\Models\OrganisasiPengirim::where('aktif', true)
             ->orderBy('nama')
             ->get();
         $pimpinanList = \App\Models\User::whereHas('role', fn($q) => $q->where('kode', 'pimpinan'))
             ->where('is_active', true)
             ->get(['id', 'name', 'title']);
-        return view('penerimaan-surat.create', compact('klasifikasi', 'organisasiList', 'pimpinanList'));
+        return view('penerimaan-surat.create', compact('klasifikasi', 'topiks', 'organisasiList', 'pimpinanList'));
     }
 
     public function store(Request $request)
     {
+        // Parse topik_ids from JSON string (Alpine.js hidden input)
+        $rawTopikIds = $request->input('topik_ids');
+        if (is_string($rawTopikIds)) {
+            $decoded = json_decode($rawTopikIds, true);
+            $request->merge(['topik_ids' => is_array($decoded) ? $decoded : []]);
+        }
+
         $data = $request->validate([
             'nomor_surat' => 'nullable|string|max:255',
             'pengirim' => 'required|string|max:255',
@@ -77,7 +89,8 @@ class PenerimaanSuratController extends Controller
             'tanggal_diterima' => 'required|date',
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
             'tujuan_pimpinan_id' => 'required|exists:users,id',
-            'is_rahasia' => 'boolean',
+            'topik_ids' => 'nullable|array',
+            'topik_ids.*' => 'exists:topik,id',
             'notes' => 'nullable|string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
@@ -85,6 +98,9 @@ class PenerimaanSuratController extends Controller
         $data['created_by'] = Auth::id();
         $data['status_id'] = statusId('received');
         $data['nomor_agenda'] = 'AG-' . now()->format('Ymd') . '-' . str_pad(SuratMasuk::max('id') + 1, 4, '0', STR_PAD_LEFT);
+
+        $topikIds = $data['topik_ids'] ?? [];
+        unset($data['topik_ids']);
 
         $lampiran = [];
         $files = $request->file('lampiran');
@@ -132,13 +148,16 @@ class PenerimaanSuratController extends Controller
 
         SuratMasuk::create($data);
 
+        $surat = SuratMasuk::latest()->first();
+        $surat->topiks()->sync($topikIds);
+
         return redirect()->route('penerimaan-surat.index')
             ->with('success', 'Surat masuk berhasil dicatat.');
     }
 
     public function edit(string $uuid, AksesKlasifikasiService $akses)
     {
-        $surat = SuratMasuk::where('uuid', $uuid)->firstOrFail();
+        $surat = SuratMasuk::with('topiks')->where('uuid', $uuid)->firstOrFail();
 
         $this->authorize('update', $surat);
 
@@ -147,6 +166,8 @@ class PenerimaanSuratController extends Controller
         }
 
         $klasifikasi = $akses->getVisibleKlasifikasi(Auth::user());
+        $topiks = Topik::orderBy('nama')->get();
+        $selectedTopiks = $surat->topiks->pluck('id')->toArray();
         $organisasiList = \App\Models\OrganisasiPengirim::where('aktif', true)
             ->orderBy('nama')
             ->get();
@@ -154,7 +175,7 @@ class PenerimaanSuratController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'title']);
 
-        return view('penerimaan-surat.edit', compact('surat', 'klasifikasi', 'organisasiList', 'pimpinanList'));
+        return view('penerimaan-surat.edit', compact('surat', 'klasifikasi', 'topiks', 'selectedTopiks', 'organisasiList', 'pimpinanList'));
     }
 
     public function update(Request $request, string $uuid, AksesKlasifikasiService $akses)
@@ -167,6 +188,13 @@ class PenerimaanSuratController extends Controller
             abort(403, 'Anda tidak memiliki akses ke surat ini.');
         }
 
+        // Parse topik_ids from JSON string (Alpine.js hidden input)
+        $rawTopikIds = $request->input('topik_ids');
+        if (is_string($rawTopikIds)) {
+            $decoded = json_decode($rawTopikIds, true);
+            $request->merge(['topik_ids' => is_array($decoded) ? $decoded : []]);
+        }
+
         $data = $request->validate([
             'nomor_surat' => 'nullable|string|max:255',
             'pengirim' => 'required|string|max:255',
@@ -175,12 +203,16 @@ class PenerimaanSuratController extends Controller
             'tanggal_diterima' => 'required|date',
             'klasifikasi_id' => 'required|exists:klasifikasi,id',
             'tujuan_pimpinan_id' => 'required|exists:users,id',
-            'is_rahasia' => 'boolean',
+            'topik_ids' => 'nullable|array',
+            'topik_ids.*' => 'exists:topik,id',
             'notes' => 'nullable|string',
             'lampiran.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'hapus_lampiran' => 'nullable|array',
+            'hapus_lampiran.*' => 'string',
         ]);
 
-        $data['is_rahasia'] = $request->boolean('is_rahasia');
+        $topikIds = $data['topik_ids'] ?? [];
+        unset($data['topik_ids']);
 
         if (!empty($data['pengirim'])) {
             $organisasi = \App\Models\OrganisasiPengirim::firstOrCreate(
@@ -190,9 +222,10 @@ class PenerimaanSuratController extends Controller
             $data['pengirim_id'] = $organisasi->id;
         }
 
+        // Upload new lampiran
+        $lampiranBaru = [];
         $files = $request->file('lampiran');
         if ($files && is_array($files)) {
-            $lampiran = is_array($surat->lampiran) ? $surat->lampiran : [];
             foreach ($files as $file) {
                 try {
                     if (!$file instanceof UploadedFile || !$file->isValid()) {
@@ -208,7 +241,7 @@ class PenerimaanSuratController extends Controller
                     }
                     $filename = Str::random(40) . '.' . $ext;
                     $file->move($destDir, $filename);
-                    $lampiran[] = [
+                    $lampiranBaru[] = [
                         'original_name' => $originalName,
                         'stored_path' => 'surat-masuk/' . $filename,
                         'mime_type' => $mimeType,
@@ -218,12 +251,20 @@ class PenerimaanSuratController extends Controller
                     Log::error('SM lampiran update failed', ['error' => $e->getMessage()]);
                 }
             }
-            $data['lampiran'] = $lampiran;
         }
+
+        // Merge lampiran: keep existing (minus yg dihapus) + baru
+        $existing = $surat->lampiran ?? [];
+        $hapus = $request->get('hapus_lampiran', []);
+        $keep = array_filter($existing, fn($f) => !in_array($f['stored_path'] ?? '', $hapus));
+        $data['lampiran'] = !empty($lampiranBaru) || !empty($keep)
+            ? array_merge(array_values($keep), $lampiranBaru)
+            : null;
 
         $perubahan = $this->diffPerubahan($surat, $data);
 
         $surat->update($data);
+        $surat->topiks()->sync($topikIds);
 
         if (!empty($perubahan)) {
             \App\Models\RiwayatPerubahanData::create([
@@ -248,7 +289,6 @@ class PenerimaanSuratController extends Controller
             'tanggal_surat' => 'Tanggal Surat',
             'tanggal_diterima' => 'Tanggal Diterima',
             'klasifikasi_id' => 'Klasifikasi',
-            'is_rahasia' => 'Sifat Surat',
             'notes' => 'Catatan',
             'lampiran' => 'Lampiran',
         ];
@@ -286,11 +326,6 @@ class PenerimaanSuratController extends Controller
                 $nilaiBaru = $nilaiBaru ? date('d/m/Y', strtotime($nilaiBaru)) : '-';
             }
 
-            if ($field === 'is_rahasia') {
-                $nilaiLama = $nilaiLama ? 'Rahasia' : 'Biasa';
-                $nilaiBaru = $nilaiBaru ? 'Rahasia' : 'Biasa';
-            }
-
             if ($field === 'pengirim_id') {
                 $nilaiLama = $nilaiLama ? (\App\Models\OrganisasiPengirim::find($nilaiLama)?->nama ?? '-') : '-';
                 $nilaiBaru = $nilaiBaru ? (\App\Models\OrganisasiPengirim::find($nilaiBaru)?->nama ?? '-') : '-';
@@ -313,7 +348,7 @@ class PenerimaanSuratController extends Controller
 
     public function show(string $uuid, AksesKlasifikasiService $akses)
     {
-        $surat = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'verifikator', 'riwayatStatus.statusKe', 'riwayatStatus.dilakukanOleh.role', 'riwayatStatus.atasNamaPimpinan.role', 'riwayatStatus.disposisi.kepadaUser.direktorat', 'riwayatStatus.disposisi.kepadaUser.divisi', 'riwayatStatus.disposisi.kepadaUser.departemen', 'riwayatPerubahanData.dilakukanOleh', 'riwayatPerubahanData.disposisi.kepadaUser', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.lampiran', 'disposisi.followUps.user', 'aksesManual.user', 'aksesManual.diberikanOleh'])
+        $surat = SuratMasuk::with(['klasifikasi', 'topiks', 'status', 'pembuat', 'verifikator', 'riwayatStatus.statusKe', 'riwayatStatus.dilakukanOleh.role', 'riwayatStatus.atasNamaPimpinan.role', 'riwayatStatus.disposisi.kepadaUser.direktorat', 'riwayatStatus.disposisi.kepadaUser.divisi', 'riwayatStatus.disposisi.kepadaUser.departemen', 'riwayatPerubahanData.dilakukanOleh', 'riwayatPerubahanData.disposisi.kepadaUser', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.lampiran', 'disposisi.followUps.user', 'aksesManual.user', 'aksesManual.diberikanOleh'])
             ->where('uuid', $uuid)->firstOrFail();
 
         $this->authorize('view', $surat);
@@ -341,7 +376,7 @@ class PenerimaanSuratController extends Controller
 
     public function cetakDisposisi(string $uuid, AksesKlasifikasiService $akses)
     {
-        $surat = SuratMasuk::with(['klasifikasi', 'status', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.atasNamaPimpinan', 'disposisi.followUps.user'])
+        $surat = SuratMasuk::with(['klasifikasi', 'topiks', 'status', 'disposisi.dariUser', 'disposisi.kepadaUser.direktorat', 'disposisi.kepadaUser.divisi', 'disposisi.kepadaUser.departemen', 'disposisi.atasNamaPimpinan', 'disposisi.followUps.user'])
             ->where('uuid', $uuid)->firstOrFail();
 
         if (!$akses->canAccess(Auth::user(), $surat->klasifikasi)) {
@@ -396,5 +431,74 @@ class PenerimaanSuratController extends Controller
         $surat->aksesManual()->where('user_id', $userId)->delete();
 
         return response()->json(['message' => 'Akses berhasil dicabut.']);
+    }
+
+    public function trash(Request $request)
+    {
+        $this->authorize('viewAny', SuratMasuk::class);
+
+        $query = SuratMasuk::onlyTrashed();
+
+        if ($q = $request->get('q')) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nomor_agenda', 'like', "%{$q}%")
+                    ->orWhere('nomor_surat', 'like', "%{$q}%")
+                    ->orWhere('pengirim', 'like', "%{$q}%")
+                    ->orWhere('perihal', 'like', "%{$q}%");
+            });
+        }
+
+        $items = $query->latest('deleted_at')->paginate($request->get('per_page', 25));
+
+        return view('penerimaan-surat.trash', compact('items'));
+    }
+
+    public function destroy(string $uuid)
+    {
+        $surat = SuratMasuk::where('uuid', $uuid)->firstOrFail();
+
+        // Cleanup JSON lampiran files from disk
+        if ($surat->lampiran) {
+            foreach ($surat->lampiran as $file) {
+                $path = storage_path('app/public/' . ($file['stored_path'] ?? ''));
+                if ($path && file_exists($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+
+        $surat->delete();
+
+        return redirect()->route('penerimaan-surat.index')
+            ->with('success', 'Surat masuk berhasil dihapus.');
+    }
+
+    public function restore(string $uuid)
+    {
+        $surat = SuratMasuk::withTrashed()->where('uuid', $uuid)->firstOrFail();
+        $surat->restore();
+
+        return redirect()->route('penerimaan-surat.show', $uuid)
+            ->with('success', 'Surat masuk berhasil dipulihkan.');
+    }
+
+    public function forceDelete(string $uuid)
+    {
+        $surat = SuratMasuk::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        // Cleanup JSON lampiran files from disk
+        if ($surat->lampiran) {
+            foreach ($surat->lampiran as $file) {
+                $path = storage_path('app/public/' . ($file['stored_path'] ?? ''));
+                if ($path && file_exists($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+
+        $surat->forceDelete();
+
+        return redirect()->route('penerimaan-surat.index')
+            ->with('success', 'Surat masuk berhasil dihapus permanen.');
     }
 }

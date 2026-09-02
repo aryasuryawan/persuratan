@@ -16,8 +16,8 @@
     </div>
     <select id="filter-rahasia" class="form-select form-select-sm" style="width: 160px;">
         <option value="">Semua</option>
-        <option value="1">Rahasia</option>
-        <option value="0">Bukan Rahasia</option>
+        <option value="1">🔒 Rahasia</option>
+        <option value="0">🌍 Umum</option>
     </select>
     <a href="{{ route('master.klasifikasi.create') }}" class="btn btn-primary">
         <i class="ti ti-plus me-2"></i>
@@ -34,8 +34,7 @@
                 <tr>
                     <th>Kode</th>
                     <th>Nama</th>
-                    <th>Warna</th>
-                    <th>Rahasia</th>
+                    <th>Status</th>
                     <th>Jumlah Surat</th>
                     <th class="w-1"></th>
                 </tr>
@@ -45,8 +44,17 @@
                 <tr>
                     <td>{{ $k->kode }}</td>
                     <td>{{ $k->nama }}</td>
-                    <td><x-badge-klasifikasi :klasifikasi="$k" /></td>
-                    <td>{{ $k->is_rahasia ? 'Ya' : 'Tidak' }}</td>
+                    <td>
+                        @if($k->is_rahasia)
+                            <span class="badge bg-amber-lt">
+                                <i class="ti ti-lock me-1"></i> Rahasia
+                            </span>
+                        @else
+                            <span class="badge bg-green-lt">
+                                <i class="ti ti-world me-1"></i> Umum
+                            </span>
+                        @endif
+                    </td>
                     <td>{{ $k->surat_masuk_count }}</td>
                     <td>
                         <div class="d-flex gap-1">
@@ -101,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rahasiaFilter = filterRahasia.value;
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
-            const isRahasia = row.cells[3].textContent.trim() === 'Ya';
+            const isRahasia = row.cells[2].textContent.includes('Rahasia');
             const matchSearch = text.includes(q);
             const matchRahasia = rahasiaFilter === '' || (rahasiaFilter === '1' && isRahasia) || (rahasiaFilter === '0' && !isRahasia);
             row.style.display = matchSearch && matchRahasia ? '' : 'none';

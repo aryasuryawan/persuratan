@@ -32,7 +32,7 @@ class SuratScopeService
 
     public function listSuratMasuk(User $user, array $filters = [])
     {
-        $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'organisasiPengirim']);
+        $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'organisasiPengirim', 'topiks']);
 
         $query = $this->scopeForUser($query, $user);
 
@@ -42,6 +42,7 @@ class SuratScopeService
             $s = $filters['search'];
             $query->where(function ($q) use ($s) {
                 $q->where('nomor_agenda', 'like', "%{$s}%")
+                  ->orWhere('nomor_surat', 'like', "%{$s}%")
                   ->orWhere('pengirim', 'like', "%{$s}%")
                   ->orWhere('perihal', 'like', "%{$s}%");
             });
@@ -49,6 +50,14 @@ class SuratScopeService
 
         if (!empty($filters['status'])) {
             $query->whereHas('status', fn($q) => $q->where('kode', $filters['status']));
+        }
+
+        if (!empty($filters['klasifikasi_id'])) {
+            $query->where('klasifikasi_id', $filters['klasifikasi_id']);
+        }
+
+        if (!empty($filters['topik_id'])) {
+            $query->whereHas('topiks', fn($q) => $q->where('topik.id', $filters['topik_id']));
         }
 
         return $query->latest('tanggal_diterima')->paginate(request('per_page', 25));
@@ -61,9 +70,9 @@ class SuratScopeService
         }
 
         return $query->where(function ($q) use ($user) {
-            $q->whereHas('klasifikasi', fn($kl) => $kl->where('kode', '!=', 'restricted'))
+            $q->whereHas('klasifikasi', fn($kl) => $kl->where('kode', '!=', 'TERBATAS'))
               ->orWhere(function ($qr) use ($user) {
-                  $qr->whereHas('klasifikasi', fn($kl) => $kl->where('kode', 'restricted'))
+                  $qr->whereHas('klasifikasi', fn($kl) => $kl->where('kode', 'TERBATAS'))
                      ->where(function ($ra) use ($user) {
                          $ra->orWhereHas('disposisi', fn($d) =>
                              $d->where('atas_nama_pimpinan_id', $user->id)

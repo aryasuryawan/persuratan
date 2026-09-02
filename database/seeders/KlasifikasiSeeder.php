@@ -10,12 +10,9 @@ class KlasifikasiSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['kode' => 'UMUM', 'nama' => 'Umum', 'color' => 'secondary', 'is_rahasia' => false],
-            ['kode' => 'KEUANGAN', 'nama' => 'Keuangan', 'color' => 'success', 'is_rahasia' => true],
-            ['kode' => 'SDM', 'nama' => 'SDM', 'color' => 'info', 'is_rahasia' => true],
-            ['kode' => 'PROGRAM', 'nama' => 'Program', 'color' => 'primary', 'is_rahasia' => false],
-            ['kode' => 'RAHASIA', 'nama' => 'Rahasia', 'color' => 'danger', 'is_rahasia' => true],
-            ['kode' => 'restricted', 'nama' => 'Restricted', 'color' => 'dark', 'is_rahasia' => true],
+            ['kode' => 'UMUM', 'nama' => 'Public', 'color' => 'success', 'is_rahasia' => false],
+            ['kode' => 'TERBATAS', 'nama' => 'Restricted', 'color' => 'warning', 'is_rahasia' => true],
+            ['kode' => 'RAHASIA', 'nama' => 'Confidential', 'color' => 'danger', 'is_rahasia' => true],
         ];
 
         foreach ($data as $d) {

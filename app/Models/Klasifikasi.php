@@ -35,4 +35,9 @@ class Klasifikasi extends Model
     {
         return $this->hasMany(SuratKeluar::class);
     }
+
+    public function isRahasia(): bool
+    {
+        return $this->is_rahasia || in_array($this->kode, ['TERBATAS', 'RAHASIA']);
+    }
 }

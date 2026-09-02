@@ -83,6 +83,10 @@ class PermissionSeeder extends Seeder
             ['kode' => 'master.klasifikasi.create', 'label' => 'Buat Klasifikasi', 'group' => 'master', 'description' => 'Membuat klasifikasi baru'],
             ['kode' => 'master.klasifikasi.edit', 'label' => 'Edit Klasifikasi', 'group' => 'master', 'description' => 'Mengedit klasifikasi'],
             ['kode' => 'master.klasifikasi.delete', 'label' => 'Hapus Klasifikasi', 'group' => 'master', 'description' => 'Menghapus klasifikasi'],
+            ['kode' => 'master.topik.index', 'label' => 'Lihat Topik', 'group' => 'master', 'description' => 'Akses master topik'],
+            ['kode' => 'master.topik.create', 'label' => 'Buat Topik', 'group' => 'master', 'description' => 'Membuat topik baru'],
+            ['kode' => 'master.topik.edit', 'label' => 'Edit Topik', 'group' => 'master', 'description' => 'Mengedit topik'],
+            ['kode' => 'master.topik.delete', 'label' => 'Hapus Topik', 'group' => 'master', 'description' => 'Menghapus topik'],
         ];
 
         foreach ($permissions as $perm) {

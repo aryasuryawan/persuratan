@@ -57,6 +57,28 @@
                         </div>
                     </div>
 
+                    <div class="mb-3" x-data="topikChips({{ ($topiks ?? collect())->toJson() }}, {{ json_encode(old('topik_ids', $selectedTopiks ?? [])) }})">
+                        <label class="form-label">Topik / Subjek</label>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <template x-for="selected in selectedTopiks" :key="selected.id">
+                                <span class="badge bg-primary-lt d-flex align-items-center gap-1">
+                                    <span x-text="selected.nama"></span>
+                                    <button type="button" class="btn-close btn-close-sm" @click="removeTopik(selected.id)" style="font-size: 0.5rem;"></button>
+                                </span>
+                            </template>
+                        </div>
+                        <div class="input-group">
+                            <select class="form-select form-select-sm" x-ref="topikSelect" @change="addTopik($event.target.value); $event.target.value = ''">
+                                <option value="">-- Pilih Topik --</option>
+                                @foreach(($topiks ?? collect()) as $t)
+                                <option value="{{ $t->id }}">{{ $t->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <input type="hidden" name="topik_ids" :value="JSON.stringify(topikIds)">
+                        <small class="form-hint">Opsional. Pilih satu atau lebih topik.</small>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Daftar Peserta</label>
                         <textarea name="daftar_peserta" rows="3" class="form-control @error('daftar_peserta') is-invalid @enderror" placeholder="Satu nama per baris">{{ old('daftar_peserta', $rekaman->daftar_peserta ?? '') }}</textarea>
@@ -75,13 +97,6 @@
                         @error('keputusan_arahan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-check form-switch">
-                            <input type="checkbox" name="is_rahasia" value="1" class="form-check-input" {{ old('is_rahasia', $rekaman->is_rahasia ?? false) ? 'checked' : '' }}>
-                            <span class="form-check-label">Rahasia — hanya admin, sekretaris, dan yang diberi akses yang dapat melihat</span>
-                        </label>
-                    </div>
-
                     @include('arsip.partials._lampiran-input', ['rekaman' => $rekaman])
                     @include('arsip.partials._foto-input', ['rekaman' => $rekaman])
 
@@ -96,3 +111,28 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function topikChips(topiks, initial = []) {
+    return {
+        topiks: topiks,
+        selectedTopiks: topiks.filter(t => initial.includes(t.id)),
+        topikIds: initial,
+        addTopik(id) {
+            id = parseInt(id);
+            if (!id || this.topikIds.includes(id)) return;
+            const topik = this.topiks.find(t => t.id === id);
+            if (topik) {
+                this.selectedTopiks.push(topik);
+                this.topikIds.push(id);
+            }
+        },
+        removeTopik(id) {
+            this.selectedTopiks = this.selectedTopiks.filter(t => t.id !== id);
+            this.topikIds = this.topikIds.filter(i => i !== id);
+        }
+    }
+}
+</script>
+@endpush

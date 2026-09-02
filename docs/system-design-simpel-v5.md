@@ -746,4 +746,291 @@ Schema::create('email_notification_logs', function (Blueprint $table) {
 
 ---
 
-*Dokumen ini adalah revisi dari v4: mengganti frontend template dari AdminLTE 4 ke Tabler, menyesuaikan konvensi CSS/JS/HTML ke sistem Tabler (page-wrapper, navbar-vertical, card, badge, timeline, modal), mengganti Tabulator dengan fetch native + tabel Tabler, dan mengganti ikon Font Awesome dengan Tabler Icons. Semua backend, database, dan business logic tidak berubah dari v4 — ditambah modul **Notifikasi Email Disposisi** (§8).*
+*Dokumen ini adalah revisi dari v4: mengganti frontend template dari AdminLTE 4 ke Tabler, menyesuaikan konvensi CSS/JS/HTML ke sistem Tabler (page-wrapper, navbar-vertical, card, badge, timeline, modal), mengganti Tabulator dengan fetch native + tabel Tabler, dan mengganti ikon Font Awesome dengan Tabler Icons. Semua backend, database, dan business logic tidak berubah dari v4 — ditambah modul **Notifikasi Email Disposisi** (§8) dan **Refactor Klasifikasi-Topik** (§9).*
+
+---
+
+## 9. Refactor Klasifikasi — Pemisahan Level Keamanan dan Topik
+
+> **Tambahan v5 (inkremen):** Refactor sistem `klasifikasi` di SiMPEL untuk memisahkan dua kepentingan secara bersih: **level keamanan** (Umum, Terbatas, Rahasia) dan **topik/subjek** (Keuangan, SDM, Program, Penghimpunan). Saat ini, tabel `klasifikasi` mencampur kedua hal ini dalam satu tabel yang sama.
+
+### 9.1 Masalah Saat Ini
+
+Tabel `kolom` `klasifikasi` menyimpan entri level keamanan (UMUM, RAHASIA, restricted) DAN entri topik (KEUANGAN, SDM, PROGRAM) di tabel yang sama. Hal ini menyebabkan:
+
+- Tidak bisa menandai dokumen dengan beberapa topik sekaligus
+- Kolom `is_rahasia` di tabel dokumen bersifat redundan (seharusnya diturunkan dari klasifikasi)
+- Filtering dan pencarian sulit membedakan level keamanan vs topik
+
+### 9.2 Arsitektur Target
+
+```mermaid
+erDiagram
+    klasifikasi ||--o{ surat_masuk : "mengamankan"
+    klasifikasi ||--o{ surat_keluar : "mengamankan"
+    klasifikasi ||--o{ surat_keputusan : "mengamankan"
+    klasifikasi ||--o{ komite_persetujuan : "mengamankan"
+    klasifikasi ||--o{ notulensi_rapim : "mengamankan"
+
+    topik ||--o{ document_topik : "ditandai"
+    surat_masuk ||--o{ document_topik : "ditandai"
+    surat_keluar ||--o{ document_topik : "ditandai"
+    surat_keputusan ||--o{ document_topik : "ditandai"
+    komite_persetujuan ||--o{ document_topik : "ditandai"
+    notulensi_rapim ||--o{ document_topik : "ditandai"
+```
+
+**Keputusan Arsitektur Utama:**
+1. `klasifikasi` mempertahankan struktur yang ada, namun di-reseed hanya berisi 3 entri level keamanan
+2. Tabel baru `topik` memiliki struktur mirip `klasifikasi` (id, uuid, kode, nama, deskripsi, color)
+3. Tabel pivot polimorfik `document_topik` menghubungkan topik ke tipe dokumen apapun
+4. `is_rahasia` dihapus dari tabel dokumen; diturunkan dari `klasifikasi.kode IN ('TERBATAS', 'RAHASIA')`
+5. Kolom `is_rahasia` pada tabel `klasifikasi` tetap dipertahankan untuk kompatibilitas mundur dengan `AksesKlasifikasiService`
+
+### 9.3 Komponen dan Interface
+
+#### 9.3.1 Model & Migration Topik
+
+**Migration:** `create_topik_table`
+```php
+Schema::create('topik', function (Blueprint $table) {
+    $table->id();
+    $table->uuid('uuid')->unique();
+    $table->string('kode', 50)->unique();
+    $table->string('nama');
+    $table->text('deskripsi')->nullable();
+    $table->string('color', 20)->default('secondary');
+    $table->timestamps();
+});
+```
+
+**Migration Pivot:** `create_document_topik_table`
+```php
+Schema::create('document_topik', function (Blueprint $table) {
+    $table->id();
+    $table->string('document_type'); // contoh: 'App\Models\SuratMasuk'
+    $table->unsignedBigInteger('document_id');
+    $table->unsignedBigInteger('topik_id');
+    $table->foreign('topik_id')->references('id')->on('topik')->cascadeOnDelete();
+    $table->unique(['document_type', 'document_id', 'topik_id']);
+});
+```
+
+**Model:** `app/Models/Topik.php`
+- Field: `uuid`, `kode`, `nama`, `deskripsi`, `color`
+- Method: `isAppliedTo($document)` — memeriksa apakah topik ini diterapkan ke dokumen tertentu
+
+#### 9.3.2 Update Seeder Klasifikasi
+
+Ganti seeder 6 record saat ini menjadi tepat 3 record level keamanan:
+
+| kode | nama | is_rahasia |
+|------|------|-----------|
+| UMUM | Public | false |
+| TERBATAS | Restricted | true |
+| RAHASIA | Confidential | true |
+
+Record `restricted` yang ada akan di-rename menjadi `TERBATAS` untuk konsistensi. Record `KEUANGAN`, `SDM`, `PROGRAM` dimigrasikan ke tabel `topik` baru.
+
+#### 9.3.3 Seeder Topik
+
+Seed topik awal:
+
+| kode | nama |
+|------|------|
+| KEUANGAN | Keuangan |
+| SDM | Sumber Daya Manusia |
+| PROGRAM | Program |
+| PENGHIMPUNAN | Penghimpunan |
+
+#### 9.3.4 Update Model Dokumen
+
+Semua 5 model dokumen (SuratMasuk, SuratKeluar, SuratKeputusan, KomitePersetujuan, NotulensiRapim) mendapat:
+
+**Relasi baru:**
+```php
+public function topiks()
+{
+    return $this->morphToMany(Topik::class, 'document');
+}
+```
+
+**Accessor baru:**
+```php
+public function getIsRahasiaAttribute(): bool
+{
+    return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
+}
+```
+
+**Dihapus dari `$fillable`:** `is_rahasia`
+
+**Tambahan model Klasifikasi:**
+```php
+public function isRahasia(): bool
+{
+    return $this->is_rahasia || in_array($this->kode, ['TERBATAS', 'RAHASIA']);
+}
+```
+
+#### 9.3.5 Perubahan Controller
+
+**PenerimaanSuratController:**
+- `create()` / `edit()`: Kirim `$topiks = Topik::orderBy('nama')->get()` bersamaan `$klasifikasi`
+- `store()` / `update()`: Sinkron pilihan topik via `$surat->topiks()->sync($request->input('topik_ids', []))`
+- Hapus assignment `is_rahasia` dari data request
+
+**SuratKeluarController:**
+- Pola sama dengan PenerimaanSuratController
+
+**Controller Arsip (SuratKeputusan, KomitePersetujuan, NotulensiRapim):**
+- Update form view untuk menerima `$topiks` dari controller alih-alih query inline
+- Sinkron relasi topik pada store/update
+
+**KlasifikasiController:**
+- Hapus `is_rahasia` dari form create/edit (diturunkan otomatis)
+- Atau pertahankan agar bisa diedit secara manual
+
+#### 9.3.6 Perubahan Service
+
+**AksesKlasifikasiService:**
+- `canAccess()`: Ganti pengecekan `$klasifikasi->is_rahasia` dengan method call `$klasifikasi->isRahasia()`
+- `getVisibleKlasifikasi()`: Filter menggunakan `isRahasia()` alih-alih kolom `is_rahasia`
+
+**SuratScopeService:**
+- `scopeSuratRestricted()`: Ganti referensi kolom `is_rahasia` langsung dengan pengecekan relasi klasifikasi
+- Tambah dukungan filtering berbasis topik
+
+**DocumentSearchService:**
+- Perluas pencarian untuk memasukkan `topik.nama` sebagai field searchable tambahan
+- Tambah parameter filter opsional `$topikId`
+
+#### 9.3.7 Perubahan Policy
+
+**SuratMasukPolicy:**
+- Ganti `$surat->is_rahasia` (kolom) dengan `$surat->is_rahasia` (accessor)
+
+**SuratKeputusanPolicy, KomitePersetujuanPolicy, NotulensiRapimPolicy:**
+- Pola sama: gunakan accessor alih-alih kolom
+
+#### 9.3.8 Perubahan View
+
+**Form view (8 form):**
+- Tambah input chip/tag multi-select untuk pemilihan topik
+- Gunakan Alpine.js atau sejenisnya untuk UX multi-select berbasis chip
+- Setiap form perlu: `<select name="topik_ids[]" multiple>`
+
+**Komponen Badge (`badge-klasifikasi.blade.php`):**
+- Rename menjadi `badge-security-level.blade.php` agar lebih jelas
+- Tambah komponen baru `badge-topik.blade.php` untuk tampilan topik
+
+**View index/daftar (4+ view):**
+- Tambah kolom topik atau badge topik di samping badge klasifikasi
+- Tambah dropdown filter topik
+
+**View show/detail:**
+- Tampilkan tag topik yang ditugaskan
+- Hapus referensi kolom `is_rahasia` langsung; gunakan accessor
+
+**surat-table.js:**
+- Tambah rendering topik di tabel AJAX
+- Tambah dukungan filter topik
+
+### 9.4 Strategi Migrasi Data
+
+Migrasi harus:
+1. Buat tabel `topik` dan pivot `document_topik`
+2. Migrasi record topik (KEUANGAN, SDM, PROGRAM, PENGHIMPUNAN) dari `klasifikasi` ke `topik`
+3. Migrasi relasi dokumen-topik yang ada: dimana `klasifikasi_id` menunjuk ke record topik, buat entry pivot
+4. Reseed `klasifikasi` hanya berisi level keamanan
+5. Drop kolom `is_rahasia` dari surat_masuk, surat_keputusan, komite_persetujuan, notulensi_rapim
+6. Pertahankan `is_rahasia` di tabel klasifikasi untuk kompatibilitas mundur
+
+### 9.5 Model Data
+
+#### Tabel Baru
+
+**topik:**
+| Kolom | Tipe | Constraint |
+|-------|------|-----------|
+| id | bigint PK | auto-increment |
+| uuid | uuid | unique |
+| kode | varchar(50) | unique |
+| nama | varchar | |
+| deskripsi | text | nullable |
+| color | varchar(20) | default 'secondary' |
+| timestamps | | |
+
+**document_topik:**
+| Kolom | Tipe | Constraint |
+|-------|------|-----------|
+| id | bigint PK | auto-increment |
+| document_type | varchar | |
+| document_id | bigint | |
+| topik_id | bigint FK | references topik.id cascadeOnDelete |
+| unique constraint | | (document_type, document_id, topik_id) |
+
+#### Tabel yang Diubah
+
+**klasifikasi:**
+- Hapus record: KEUANGAN, SDM, PROGRAM
+- Rename `restricted` menjadi `TERBATAS`
+- Pertahankan kolom `is_rahasia` (untuk kompatibilitas mundur, auto-set berdasarkan kode)
+
+**surat_masuk, surat_keputusan, komite_persetujuan, notulensi_rapim:**
+- Drop kolom `is_rahasia`
+
+**surat_keluar:**
+- Tidak ada perubahan (tidak pernah punya is_rahasia)
+
+### 9.6 Properti Kevalidan
+
+| # | Properti | Deskripsi |
+|---|---------|-----------|
+| 1 | Klasifikasi berisi tepat 3 level keamanan | Untuk semua state database, tabel `klasifikasi` berisi tepat 3 record dengan kode UMUM, TERBATAS, dan RAHASIA |
+| 2 | Is-rahasia diturunkan dari relasi klasifikasi | Untuk setiap dokumen dengan klasifikasi yang ditugaskan, accessor `is_rahasia` mengembalikan `true` jika dan hanya jika kode klasifikasi adalah 'TERBATAS' atau 'RAHASIA' |
+| 3 | Tidak ada kolom is_rahasia di tabel dokumen | Untuk semua tabel dokumen, kolom boolean `is_rahasia` tidak ada setelah migrasi |
+| 4 | Multi-select topik tersimpan dengan benar | Untuk setiap dokumen, setelah sync topik_ids, tabel pivot `document_topik` berisi tepat asosiasi topik yang ditentukan |
+| 5 | Tampilan topik menampilkan semua topik yang ditugaskan | Untuk setiap dokumen dengan topik yang ditugaskan, view display merender semua nama topik sebagai tag/chip |
+| 6 | Filter topik mengembalikan subset yang benar | Untuk setiap filter topik yang diterapkan pada query dokumen, hasil hanya berisi dokumen yang memiliki topik yang dipilih |
+| 7 | Filter klasifikasi mengembalikan subset yang benar | Untuk setiap filter klasifikasi yang diterapkan pada query dokumen, hasil hanya berisi dokumen dengan klasifikasi_id yang cocok |
+| 8 | Topik opsional di semua form | Untuk setiap pengiriman form dokumen tanpa topik_ids, dokumen berhasil disimpan tanpa asosiasi topik |
+| 9 | Kontrol akses menggunakan relasi klasifikasi | Untuk setiap pengecekan akses pada dokumen, sistem menentukan akses terbatas dengan memeriksa relasi klasifikasi, bukan membaca kolom langsung dari tabel dokumen |
+| 10 | Pencarian mencakup topik | Untuk setiap kueri pencarian dokumen, sistem mengembalikan dokumen di mana istilah pencarian cocok dengan nama klasifikasi ATAU nama topik ATAU field spesifik dokumen |
+
+### 9.7 Penanganan Error
+
+**Error Migrasi:**
+- Jika migrasi menemukan masalah integritas data (misal klasifikasi_ids yang terputus), log error dan hentikan, izinkan penyelesaian manual
+- Backup database sebelum menjalankan migrasi
+
+**Validasi Form:**
+- Pemilihan topik bersifat opsional; tidak ada error validasi jika kosong
+- Pemilihan klasifikasi bersifat wajib; error validasi jika tidak diberikan
+- Duplikat asosiasi topik dicegah oleh constraint unique pada pivot table
+
+**Fallback Kontrol Akses:**
+- Jika dokumen tidak memiliki klasifikasi yang ditugaskan, default ke level akses Public (UMUM)
+- Jika relasi klasifikasi null, accessor `is_rahasia` mengembalikan `false`
+
+### 9.8 Strategi Pengujian
+
+**Unit Tests:**
+- Test operasi CRUD model `Topik`
+- Test accessor `is_rahasia` pada semua 5 model dokumen
+- Test method `Klasifikasi::isRahasia()`
+- Test otorisasi policy dengan pola akses baru
+
+**Property Tests:**
+- Properti 1: Reseeding menyisakan tepat 3 record klasifikasi
+- Properti 2: Accessor is_rahasia cocok dengan kode klasifikasi untuk semua dokumen
+- Properti 3: Kolom is_rahasia dihapus dari tabel dokumen
+- Properti 4: Sync topik membuat entry pivot yang benar
+- Properti 6: Filter topik mengembalikan subset yang benar
+- Properti 8: Form menerima pilihan topik kosong
+
+**Integration Tests:**
+- Test alur CRUD lengkap untuk setiap tipe dokumen dengan penugasan topik
+- Test AksesKlasifikasiService dengan data klasifikasi-only baru
+- Test DocumentSearchService dengan pencarian berbasis topik
+- Test migrasi mempertahankan integritas data yang ada

@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             StatusSuratSeeder::class,
             KlasifikasiSeeder::class,
+            TopikSeeder::class,
             SeedMasterDataSeeder::class,
             PreservedDataSeeder::class,
             TestDataSeeder::class,

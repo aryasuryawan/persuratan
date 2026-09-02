@@ -34,10 +34,10 @@
                 <textarea name="deskripsi" class="form-control" rows="3">{{ old('deskripsi') }}</textarea>
             </div>
             <div class="mb-3">
-                <label class="form-check">
-                    <input type="checkbox" name="is_rahasia" value="1" class="form-check-input" {{ old('is_rahasia') ? 'checked' : '' }}>
-                    <span class="form-check-label">Rahasia</span>
-                </label>
+                <div class="form-hint">
+                    <i class="ti ti-info-circle me-1"></i>
+                    Status rahasia otomatis berdasarkan kode: <strong>TERBATAS</strong> dan <strong>RAHASIA</strong> = rahasia.
+                </div>
             </div>
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary">Simpan</button>

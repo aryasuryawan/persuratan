@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Klasifikasi;
 use App\Models\Lampiran;
 use App\Models\Role;
 use App\Models\SuratKeputusan;
@@ -209,7 +210,7 @@ class SuratKeputusanModuleTest extends TestCase
             ->delete(route('surat-keputusan.destroy', $sk->uuid))
             ->assertRedirect(route('surat-keputusan.index'));
 
-        $this->assertDatabaseMissing('surat_keputusan', ['uuid' => $sk->uuid]);
+        $this->assertSoftDeleted('surat_keputusan', ['uuid' => $sk->uuid]);
         $this->assertDatabaseMissing('lampiran', ['lampirkan_id' => $sk->id]);
         Storage::disk('local')->assertMissing($path);
     }
@@ -246,9 +247,10 @@ class SuratKeputusanModuleTest extends TestCase
     public function test_arsip_rahasia_tidak_dapat_dilihat_unit_lain_tanpa_akses_manual(): void
     {
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $terbatas = Klasifikasi::firstOrCreate(['kode' => 'TERBATAS'], ['nama' => 'Terbatas', 'is_rahasia' => true]);
         $sk = SuratKeputusan::create($this->payloadSk([
             'dicatat_oleh_id' => $sekretaris->id,
-            'is_rahasia' => true,
+            'klasifikasi_id' => $terbatas->id,
         ]));
 
         $unitLain = $this->userDenganRole($this->unitLainRole);
@@ -261,9 +263,10 @@ class SuratKeputusanModuleTest extends TestCase
     public function test_unit_lain_dengan_akses_manual_bisa_lihat_arsip_rahasia(): void
     {
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $terbatas = Klasifikasi::firstOrCreate(['kode' => 'TERBATAS'], ['nama' => 'Terbatas', 'is_rahasia' => true]);
         $sk = SuratKeputusan::create($this->payloadSk([
             'dicatat_oleh_id' => $sekretaris->id,
-            'is_rahasia' => true,
+            'klasifikasi_id' => $terbatas->id,
         ]));
 
         $unitLain = $this->userDenganRole($this->unitLainRole);
@@ -282,9 +285,10 @@ class SuratKeputusanModuleTest extends TestCase
     public function test_pimpinan_dan_unit_lain_tidak_bisa_beri_akses_arsip(): void
     {
         $sekretaris = $this->userDenganRole($this->sekretarisRole);
+        $terbatas = Klasifikasi::firstOrCreate(['kode' => 'TERBATAS'], ['nama' => 'Terbatas', 'is_rahasia' => true]);
         $sk = SuratKeputusan::create($this->payloadSk([
             'dicatat_oleh_id' => $sekretaris->id,
-            'is_rahasia' => true,
+            'klasifikasi_id' => $terbatas->id,
         ]));
 
         $pimpinan = $this->userDenganRole($this->pimpinanRole);

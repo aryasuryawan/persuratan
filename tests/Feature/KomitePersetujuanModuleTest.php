@@ -155,6 +155,6 @@ class KomitePersetujuanModuleTest extends TestCase
             ->delete(route('komite-persetujuan.destroy', $komite->uuid))
             ->assertRedirect(route('komite-persetujuan.index'));
 
-        $this->assertDatabaseMissing('komite_persetujuan', ['uuid' => $komite->uuid]);
+        $this->assertSoftDeleted('komite_persetujuan', ['uuid' => $komite->uuid]);
     }
 }

@@ -39,14 +39,14 @@ class DocumentSearchServiceTest extends TestCase
         StatusSurat::create(['kode' => 'received', 'label' => 'Diterima', 'urutan' => 1]);
 
         $this->restricted = Klasifikasi::create([
-            'kode' => 'restricted',
-            'nama' => 'Restricted',
+            'kode' => 'TERBATAS',
+            'nama' => 'Terbatas',
             'is_rahasia' => true,
         ]);
 
         $this->normal = Klasifikasi::create([
-            'kode' => 'normal',
-            'nama' => 'Normal',
+            'kode' => 'UMUM',
+            'nama' => 'Umum',
             'is_rahasia' => false,
         ]);
     }

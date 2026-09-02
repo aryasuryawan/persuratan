@@ -61,6 +61,8 @@
         <a class="dropdown-item {{ request()->routeIs('surat-keputusan*') ? 'active' : '' }}" href="{{ route('surat-keputusan.index') }}">Surat Keputusan</a>
         <a class="dropdown-item {{ request()->routeIs('komite-persetujuan*') ? 'active' : '' }}" href="{{ route('komite-persetujuan.index') }}">Hasil Komite Persetujuan</a>
         <a class="dropdown-item {{ request()->routeIs('notulensi-rapim*') ? 'active' : '' }}" href="{{ route('notulensi-rapim.index') }}">Notulensi Rapim</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item {{ request()->routeIs('kotak-sampah*') ? 'active' : '' }}" href="{{ route('kotak-sampah.index') }}"><i class="ti ti-trash me-1"></i> Kotak Sampah</a>
     </div>
 </li>
 
@@ -91,6 +93,7 @@
             <a class="dropdown-item" href="{{ route('master.roles.index') }}">Role</a>
             <a class="dropdown-item" href="{{ route('master.kode-surats.index') }}">Kode Surat</a>
             <a class="dropdown-item" href="{{ route('master.klasifikasi.index') }}">Klasifikasi</a>
+            <a class="dropdown-item" href="{{ route('master.topik.index') }}">Topik</a>
             <a class="dropdown-item" href="{{ route('master.users.index') }}">User</a>
             <a class="dropdown-item" href="{{ route('master.sekretaris-pimpinan.index') }}">Sekretaris–Pimpinan</a>
             <a class="dropdown-item" href="{{ route('master.settings.index') }}">Pengaturan</a>

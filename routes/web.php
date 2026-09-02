@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\DisposisiFollowUpController;
 use App\Http\Controllers\KomitePersetujuanController;
+use App\Http\Controllers\KotakSampahController;
 use App\Http\Controllers\Master\DepartemenController;
 use App\Http\Controllers\Master\DirektoratController;
 use App\Http\Controllers\Master\DivisiController;
@@ -40,13 +41,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard2', [DashboardController::class, 'dashboard2'])->name('dashboard2');
+    Route::get('/kotak-sampah', [KotakSampahController::class, 'index'])->name('kotak-sampah.index');
 
     Route::prefix('penerimaan-surat')->name('penerimaan-surat.')->group(function () {
         Route::get('/', [PenerimaanSuratController::class, 'index'])->name('index');
+        Route::get('/trash/list', [PenerimaanSuratController::class, 'trash'])->name('trash');
         Route::get('/create', [PenerimaanSuratController::class, 'create'])->name('create');
         Route::post('/', [PenerimaanSuratController::class, 'store'])->name('store');
         Route::get('/{uuid}/edit', [PenerimaanSuratController::class, 'edit'])->name('edit');
         Route::put('/{uuid}', [PenerimaanSuratController::class, 'update'])->name('update');
+        Route::delete('/{uuid}', [PenerimaanSuratController::class, 'destroy'])->name('destroy');
+        Route::post('/{uuid}/restore', [PenerimaanSuratController::class, 'restore'])->name('restore');
+        Route::delete('/{uuid}/force-delete', [PenerimaanSuratController::class, 'forceDelete'])->name('force-delete');
         Route::get('/{uuid}/cetak-disposisi', [PenerimaanSuratController::class, 'cetakDisposisi'])->name('cetak-disposisi');
         Route::get('/{uuid}', [PenerimaanSuratController::class, 'show'])->name('show');
     });
@@ -69,17 +75,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
         Route::get('/', [SuratKeluarController::class, 'index'])->name('index');
+        Route::get('/trash/list', [SuratKeluarController::class, 'trash'])->name('trash');
         Route::get('/create', [SuratKeluarController::class, 'create'])->name('create');
         Route::post('/', [SuratKeluarController::class, 'store'])->name('store');
         Route::get('/{uuid}/edit', [SuratKeluarController::class, 'edit'])->name('edit');
         Route::put('/{uuid}', [SuratKeluarController::class, 'update'])->name('update');
         Route::delete('/{uuid}', [SuratKeluarController::class, 'destroy'])->name('destroy');
+        Route::post('/{uuid}/restore', [SuratKeluarController::class, 'restore'])->name('restore');
+        Route::delete('/{uuid}/force-delete', [SuratKeluarController::class, 'forceDelete'])->name('force-delete');
         Route::get('/{uuid}', [SuratKeluarController::class, 'show'])->name('show');
     });
 
     Route::resource('surat-keputusan', SuratKeputusanController::class);
+    Route::get('surat-keputusan/trash/list', [SuratKeputusanController::class, 'trash'])->name('surat-keputusan.trash');
+    Route::post('surat-keputusan/{uuid}/restore', [SuratKeputusanController::class, 'restore'])->name('surat-keputusan.restore');
+    Route::delete('surat-keputusan/{uuid}/force-delete', [SuratKeputusanController::class, 'forceDelete'])->name('surat-keputusan.force-delete');
+
     Route::resource('komite-persetujuan', KomitePersetujuanController::class);
+    Route::get('komite-persetujuan/trash/list', [KomitePersetujuanController::class, 'trash'])->name('komite-persetujuan.trash');
+    Route::post('komite-persetujuan/{uuid}/restore', [KomitePersetujuanController::class, 'restore'])->name('komite-persetujuan.restore');
+    Route::delete('komite-persetujuan/{uuid}/force-delete', [KomitePersetujuanController::class, 'forceDelete'])->name('komite-persetujuan.force-delete');
+
     Route::resource('notulensi-rapim', NotulensiRapimController::class);
+    Route::get('notulensi-rapim/trash/list', [NotulensiRapimController::class, 'trash'])->name('notulensi-rapim.trash');
+    Route::post('notulensi-rapim/{uuid}/restore', [NotulensiRapimController::class, 'restore'])->name('notulensi-rapim.restore');
+    Route::delete('notulensi-rapim/{uuid}/force-delete', [NotulensiRapimController::class, 'forceDelete'])->name('notulensi-rapim.force-delete');
 
     Route::prefix('arsip/{modul}/{uuid}')->name('arsip.akses.')->group(function () {
         Route::get('/akses', [ArsipAksesController::class, 'listAkses'])->name('list-akses');
@@ -107,6 +127,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
         Route::resource('kode-surats', KodeSuratController::class);
         Route::resource('klasifikasi', KlasifikasiController::class);
+        Route::resource('topik', \App\Http\Controllers\Master\TopikController::class);
         Route::resource('users', UserController::class);
         Route::resource('sekretaris-pimpinan', SekretarisPimpinanController::class)->except(['edit', 'update']);
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
@@ -124,6 +145,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(function () {
         Route::get('/surat-masuk', [PenerimaanSuratController::class, 'index'])->name('surat-masuk');
+        Route::get('/surat-keluar', [SuratKeluarController::class, 'index'])->name('surat-keluar');
         Route::post('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'assignAkses'])->name('surat-masuk.assign-akses');
         Route::delete('/surat-masuk/{uuid}/akses/{userId}', [PenerimaanSuratController::class, 'removeAkses'])->name('surat-masuk.remove-akses');
         Route::get('/surat-masuk/{uuid}/akses', [PenerimaanSuratController::class, 'listAkses'])->name('surat-masuk.list-akses');

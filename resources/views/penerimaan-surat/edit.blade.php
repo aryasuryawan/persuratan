@@ -52,6 +52,28 @@
                 </div>
             </div>
 
+            <div class="mb-3" x-data="topikChips({{ $topiks->toJson() }}, {{ json_encode(old('topik_ids', $selectedTopiks)) }})">
+                <label class="form-label">Topik / Subjek</label>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <template x-for="selected in selectedTopiks" :key="selected.id">
+                        <span class="badge bg-primary-lt d-flex align-items-center gap-1">
+                            <span x-text="selected.nama"></span>
+                            <button type="button" class="btn-close btn-close-sm" @click="removeTopik(selected.id)" style="font-size: 0.5rem;"></button>
+                        </span>
+                    </template>
+                </div>
+                <div class="input-group">
+                    <select class="form-select form-select-sm" x-ref="topikSelect" @change="addTopik($event.target.value); $event.target.value = ''">
+                        <option value="">-- Pilih Topik --</option>
+                        @foreach($topiks as $t)
+                        <option value="{{ $t->id }}">{{ $t->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <input type="hidden" name="topik_ids" :value="JSON.stringify(topikIds)">
+                <small class="form-hint">Opsional. Pilih satu atau lebih topik.</small>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label required">Tujuan Pimpinan</label>
                 <select name="tujuan_pimpinan_id" class="form-select @error('tujuan_pimpinan_id') is-invalid @enderror" required>
@@ -86,22 +108,31 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Lampiran <small class="text-muted">(opsional — tambah file baru, lampiran lama tetap)</small></label>
-                <input type="file" name="lampiran[]" class="form-control @error('lampiran.*') is-invalid @enderror" multiple accept=".pdf,.jpg,.jpeg,.png">
-                <small class="form-hint">PDF, JPG, PNG. Maks 10MB per file. Bisa pilih banyak file.</small>
-                @error('lampiran.*') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <label class="form-label">Lampiran Saat Ini</label>
                 @if($surat->lampiran)
-                <ul class="list-unstyled mt-2 mb-0">
+                <ul class="list-unstyled mb-2" id="existing-lampiran">
                     @foreach($surat->lampiran as $file)
-                    <li class="text-secondary small">{{ $file['original_name'] }} ({{ number_format($file['file_size'] / 1024, 1) }} KB)</li>
+                    <li class="mb-1 d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+                        <span>{{ $file['original_name'] }}</span>
+                        <small class="text-muted ms-2">({{ number_format($file['file_size'] / 1024, 1) }} KB)</small>
+                        <label class="form-check ms-3 mb-0">
+                            <input type="checkbox" name="hapus_lampiran[]" value="{{ $file['stored_path'] }}" class="form-check-input">
+                            <span class="form-check-label text-danger small">Hapus</span>
+                        </label>
+                    </li>
                     @endforeach
                 </ul>
+                @else
+                <p class="text-muted mb-2"><em>Tidak ada lampiran</em></p>
                 @endif
             </div>
 
-            <div class="mb-3 form-check form-switch">
-                <input type="checkbox" name="is_rahasia" class="form-check-input" id="is_rahasia" value="1" {{ old('is_rahasia', $surat->is_rahasia) ? 'checked' : '' }}>
-                <label class="form-check-label" for="is_rahasia">Surat Rahasia</label>
+            <div class="mb-3">
+                <label class="form-label">Tambah Lampiran Baru <small class="text-muted">(opsional)</small></label>
+                <input type="file" name="lampiran[]" class="form-control @error('lampiran.*') is-invalid @enderror" multiple accept=".pdf,.jpg,.jpeg,.png">
+                <small class="form-hint">PDF, JPG, PNG. Maks 10MB per file.</small>
+                @error('lampiran.*') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
             <div class="form-footer">
@@ -112,3 +143,28 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function topikChips(topiks, initial = []) {
+    return {
+        topiks: topiks,
+        selectedTopiks: topiks.filter(t => initial.includes(t.id)),
+        topikIds: initial,
+        addTopik(id) {
+            id = parseInt(id);
+            if (!id || this.topikIds.includes(id)) return;
+            const topik = this.topiks.find(t => t.id === id);
+            if (topik) {
+                this.selectedTopiks.push(topik);
+                this.topikIds.push(id);
+            }
+        },
+        removeTopik(id) {
+            this.selectedTopiks = this.selectedTopiks.filter(t => t.id !== id);
+            this.topikIds = this.topikIds.filter(i => i !== id);
+        }
+    }
+}
+</script>
+@endpush

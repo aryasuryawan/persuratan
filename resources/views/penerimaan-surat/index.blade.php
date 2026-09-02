@@ -102,17 +102,29 @@
 <div class="card card-bordered table-card">
     <div class="card-header">
         <h3 class="card-title">Daftar Surat Masuk</h3>
-        <div class="card-actions d-flex gap-2">
+        <div class="card-actions d-flex gap-2 flex-wrap">
             <div class="input-icon">
                 <input type="text" id="search-surat" class="form-control form-control-sm" placeholder="Cari nomor agenda, pengirim, perihal...">
                 <span class="input-icon-addon">
                     <i class="ti ti-search"></i>
                 </span>
             </div>
-            <select id="filter-status" class="form-select form-select-sm" style="width: 180px;">
+            <select id="filter-status" class="form-select form-select-sm" style="width: 170px;">
                 <option value="">Semua Status</option>
                 @foreach($statuses as $s)
                     <option value="{{ $s->kode }}">{{ $s->label }}</option>
+                @endforeach
+            </select>
+            <select id="filter-klasifikasi" class="form-select form-select-sm" style="width: 170px;">
+                <option value="">Semua Klasifikasi</option>
+                @foreach($klasifikasi as $k)
+                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                @endforeach
+            </select>
+            <select id="filter-topik" class="form-select form-select-sm" style="width: 170px;">
+                <option value="">Semua Topik</option>
+                @foreach($topiks as $t)
+                    <option value="{{ $t->id }}">{{ $t->nama }}</option>
                 @endforeach
             </select>
         </div>
@@ -127,6 +139,7 @@
                     <th>Tgl Diterima</th>
                     <th>Status</th>
                     <th>Klasifikasi</th>
+                    <th>Topik</th>
                     <th class="text-end" style="width: 1%">Aksi</th>
                 </tr>
             </thead>

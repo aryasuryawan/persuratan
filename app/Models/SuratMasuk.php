@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class SuratMasuk extends Model
     protected $fillable = [
         'uuid', 'nomor_agenda', 'nomor_surat', 'pengirim', 'pengirim_id', 'perihal',
         'tanggal_surat', 'tanggal_diterima', 'lampiran', 'klasifikasi_id',
-        'tujuan_pimpinan_id', 'status_id', 'is_rahasia', 'lampiran_path', 'created_by',
+        'tujuan_pimpinan_id', 'status_id', 'lampiran_path', 'created_by',
         'verified_by', 'verified_at', 'completed_at', 'notes',
     ];
 
@@ -28,7 +29,6 @@ class SuratMasuk extends Model
             'tanggal_surat' => 'date',
             'tanggal_diterima' => 'date',
             'lampiran' => 'array',
-            'is_rahasia' => 'boolean',
             'verified_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
@@ -46,6 +46,16 @@ class SuratMasuk extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(Klasifikasi::class);
+    }
+
+    public function topiks(): MorphToMany
+    {
+        return $this->morphToMany(Topik::class, 'document', 'document_topik');
+    }
+
+    public function getIsRahasiaAttribute(): bool
+    {
+        return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
     }
 
     public function organisasiPengirim(): BelongsTo

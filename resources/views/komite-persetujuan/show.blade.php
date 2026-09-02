@@ -89,6 +89,12 @@
                         <div class="datagrid-title">Dicatat oleh</div>
                         <div class="datagrid-value">{{ $komite->dicatatOleh?->name }}</div>
                     </div>
+                    @if($komite->topiks->count() > 0)
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Topik</div>
+                        <div class="datagrid-value"><x-badge-topik :topiks="$komite->topiks" /></div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

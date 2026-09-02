@@ -36,13 +36,18 @@ class SuratMasukPolicy
         return $user->id === $suratMasuk->created_by;
     }
 
+    public function delete(User $user, SuratMasuk $suratMasuk): bool
+    {
+        return $user->hasPermission('surat-masuk.delete');
+    }
+
     public function view(User $user, SuratMasuk $suratMasuk): bool
     {
         if (! $user->hasPermission('surat-masuk.show')) {
             return false;
         }
 
-        if ($suratMasuk->klasifikasi->kode === 'restricted') {
+        if ($suratMasuk->klasifikasi->kode === 'TERBATAS') {
             if ($user->hasRole('admin')) {
                 return true;
             }
@@ -71,7 +76,7 @@ class SuratMasukPolicy
             return false;
         }
 
-        if ($suratMasuk->klasifikasi->is_rahasia && ! $user->hasRole('pimpinan') && ! $user->hasRole('admin') && ! $user->hasRole('sekretaris')) {
+        if ($suratMasuk->is_rahasia && ! $user->hasRole('pimpinan') && ! $user->hasRole('admin') && ! $user->hasRole('sekretaris')) {
             return false;
         }
 

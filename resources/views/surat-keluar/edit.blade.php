@@ -11,65 +11,87 @@
         <form method="POST" action="{{ route('surat-keluar.update', $surat->uuid) }}" enctype="multipart/form-data">
             @csrf @method('PUT')
 
-<div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label required">Nomor Surat</label>
-                <input type="text" name="nomor_surat" class="form-control @error('nomor_surat') is-invalid @enderror" value="{{ old('nomor_surat', $surat->nomor_surat) }}" required>
-                @error('nomor_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Nomor Surat</label>
+                    <input type="text" name="nomor_surat" class="form-control @error('nomor_surat') is-invalid @enderror" value="{{ old('nomor_surat', $surat->nomor_surat) }}" required>
+                    @error('nomor_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label required">Klasifikasi</label>
+                    <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror" required>
+                        <option value="">-- Pilih --</option>
+                        @foreach($klasifikasi as $k)
+                        <option value="{{ $k->id }}" {{ old('klasifikasi_id', $surat->klasifikasi_id) == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
+                        @endforeach
+                    </select>
+                    @error('klasifikasi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Kode Surat</label>
+                    <select name="kode_surat_id" class="form-select @error('kode_surat_id') is-invalid @enderror">
+                        <option value="">-- Pilih --</option>
+                        @foreach($kodeSurats as $k)
+                        <option value="{{ $k->id }}" {{ old('kode_surat_id', $surat->kode_surat_id) == $k->id ? 'selected' : '' }}>[{{ $k->kode }}] {{ $k->nama }}</option>
+                        @endforeach
+                    </select>
+                    @error('kode_surat_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label required">Klasifikasi</label>
-                <select name="klasifikasi_id" class="form-select @error('klasifikasi_id') is-invalid @enderror" required>
-                    <option value="">-- Pilih --</option>
-                    @foreach($klasifikasi as $k)
-                    <option value="{{ $k->id }}" {{ old('klasifikasi_id', $surat->klasifikasi_id) == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
+
+            <div class="mb-3" x-data="topikChips({{ $topiks->toJson() }}, {{ json_encode(old('topik_ids', $selectedTopiks)) }})">
+                <label class="form-label">Topik / Subjek</label>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <template x-for="selected in selectedTopiks" :key="selected.id">
+                        <span class="badge bg-primary-lt d-flex align-items-center gap-1">
+                            <span x-text="selected.nama"></span>
+                            <button type="button" class="btn-close btn-close-sm" @click="removeTopik(selected.id)" style="font-size: 0.5rem;"></button>
+                        </span>
+                    </template>
+                </div>
+                <div class="input-group">
+                    <select class="form-select form-select-sm" x-ref="topikSelect" @change="addTopik($event.target.value); $event.target.value = ''">
+                        <option value="">-- Pilih Topik --</option>
+                        @foreach($topiks as $t)
+                        <option value="{{ $t->id }}">{{ $t->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <input type="hidden" name="topik_ids" :value="JSON.stringify(topikIds)">
+                <small class="form-hint">Opsional. Pilih satu atau lebih topik.</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Tujuan</label>
+                <input type="text" name="tujuan_surat" class="form-control @error('tujuan_surat') is-invalid @enderror" value="{{ old('tujuan_surat', $surat->tujuan_surat) }}" required>
+                @error('tujuan_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Perihal</label>
+                <input type="text" name="perihal" class="form-control @error('perihal') is-invalid @enderror" value="{{ old('perihal', $surat->perihal) }}" required>
+                @error('perihal') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label required">Pimpinan Pengirim</label>
+                <select name="pimpinan_pengirim_id" class="form-select @error('pimpinan_pengirim_id') is-invalid @enderror" required>
+                    <option value="">-- Pilih Pimpinan --</option>
+                    @foreach($pimpinanList as $p)
+                    <option value="{{ $p->id }}" {{ old('pimpinan_pengirim_id', $surat->pimpinan_pengirim_id) == $p->id ? 'selected' : '' }}>
+                        {{ $p->name }} @if($p->title ?? $p->jabatan) ({{ $p->title ?? $p->jabatan }}) @endif
+                    </option>
                     @endforeach
                 </select>
-                @error('klasifikasi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <small class="form-hint">Pilih pimpinan yang mengirim surat ini.</small>
+                @error('pimpinan_pengirim_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label">Kode Surat</label>
-                <select name="kode_surat_id" class="form-select @error('kode_surat_id') is-invalid @enderror">
-                    <option value="">-- Pilih --</option>
-                    @foreach($kodeSurats as $k)
-                    <option value="{{ $k->id }}" {{ old('kode_surat_id', $surat->kode_surat_id) == $k->id ? 'selected' : '' }}>[{{ $k->kode }}] {{ $k->nama }}</option>
-                    @endforeach
-                </select>
-                @error('kode_surat_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
+            <div class="mb-3">
+                <label class="form-label">Tanggal Surat</label>
+                <input type="date" name="tanggal_surat" class="form-control @error('tanggal_surat') is-invalid @enderror" value="{{ old('tanggal_surat', $surat->tanggal_surat->format('Y-m-d')) }}" required>
+                @error('tanggal_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label required">Tujuan</label>
-            <input type="text" name="tujuan_surat" class="form-control @error('tujuan_surat') is-invalid @enderror" value="{{ old('tujuan_surat', $surat->tujuan_surat) }}" required>
-            @error('tujuan_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label required">Perihal</label>
-            <input type="text" name="perihal" class="form-control @error('perihal') is-invalid @enderror" value="{{ old('perihal', $surat->perihal) }}" required>
-            @error('perihal') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label required">Pimpinan Pengirim</label>
-            <select name="pimpinan_pengirim_id" class="form-select @error('pimpinan_pengirim_id') is-invalid @enderror" required>
-                <option value="">-- Pilih Pimpinan --</option>
-                @foreach($pimpinanList as $p)
-                <option value="{{ $p->id }}" {{ old('pimpinan_pengirim_id', $surat->pimpinan_pengirim_id) == $p->id ? 'selected' : '' }}>
-                    {{ $p->name }} @if($p->title ?? $p->jabatan) ({{ $p->title ?? $p->jabatan }}) @endif
-                </option>
-                @endforeach
-            </select>
-            <small class="form-hint">Pilih pimpinan yang mengirim surat ini.</small>
-            @error('pimpinan_pengirim_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Tanggal Surat</label>
-            <input type="date" name="tanggal_surat" class="form-control @error('tanggal_surat') is-invalid @enderror" value="{{ old('tanggal_surat', $surat->tanggal_surat->format('Y-m-d')) }}" required>
-            @error('tanggal_surat') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        </div>
 
             <div class="mb-3">
                 <label class="form-label">Terkait Surat Masuk</label>
@@ -118,3 +140,28 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function topikChips(topiks, initial = []) {
+    return {
+        topiks: topiks,
+        selectedTopiks: topiks.filter(t => initial.includes(t.id)),
+        topikIds: initial,
+        addTopik(id) {
+            id = parseInt(id);
+            if (!id || this.topikIds.includes(id)) return;
+            const topik = this.topiks.find(t => t.id === id);
+            if (topik) {
+                this.selectedTopiks.push(topik);
+                this.topikIds.push(id);
+            }
+        },
+        removeTopik(id) {
+            this.selectedTopiks = this.selectedTopiks.filter(t => t.id !== id);
+            this.topikIds = this.topikIds.filter(i => i !== id);
+        }
+    }
+}
+</script>
+@endpush

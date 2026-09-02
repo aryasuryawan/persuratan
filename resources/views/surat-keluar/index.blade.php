@@ -1,97 +1,114 @@
 ﻿@extends('layouts.app')
 
-@section('page-title', 'Surat Keluar')
-
-@section('page-header')
-@endsection
-
-@section('page-actions')
-<a href="{{ route('surat-keluar.create') }}" class="btn btn-primary">
-    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-    Tambah Surat Keluar
-</a>
-@endsection
-
 @section('content')
-<div class="card">
-    <form method="GET" class="card-body border-bottom py-3">
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            <div class="input-icon flex-grow-1" style="min-width: 200px; max-width: 340px;">
-                <input type="text" class="form-control" name="q" placeholder="Cari no surat, perihal, tujuan..." value="{{ request('q') }}">
-                <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+<div class="page-header d-print-none mb-5">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">SiMPEL</div>
+            <h2 class="page-title">Surat Keluar</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            @can('create', App\Models\SuratKeluar::class)
+            <a href="{{ route('surat-keluar.create') }}" class="btn btn-primary">
+                <i class="ti ti-plus me-2"></i>
+                Tambah Surat Keluar
+            </a>
+            @endcan
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards row-deck mb-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="subheader">Total Surat Keluar</div>
+                        <div class="h1 mt-1 mb-0">{{ $total }}</div>
+                    </div>
+                    <div class="stat-icon bg-primary-subtle">
+                        <i class="ti ti-mail-opened fs-2"></i>
+                    </div>
+                </div>
+                <div class="text-muted text-sm mt-2">
+                    <span class="text-green d-inline-flex align-items-center lh-1">
+                        <i class="ti ti-trending-up me-1"></i>
+                        +{{ $hariIni }}
+                    </span>
+                    hari ini
+                </div>
             </div>
-            <select class="form-select" name="klasifikasi_id" style="width: 200px;" title="Klasifikasi">
+        </div>
+    </div>
+</div>
+
+<div class="card card-bordered table-card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Surat Keluar</h3>
+        <div class="card-actions d-flex gap-2 flex-wrap">
+            <div class="input-icon">
+                <input type="text" id="search-surat" class="form-control form-control-sm" placeholder="Cari nomor surat, tujuan, perihal...">
+                <span class="input-icon-addon">
+                    <i class="ti ti-search"></i>
+                </span>
+            </div>
+            <select id="filter-klasifikasi" class="form-select form-select-sm" style="width: 170px;">
                 <option value="">Semua Klasifikasi</option>
                 @foreach($klasifikasi as $k)
-                <option value="{{ $k->id }}" {{ request('klasifikasi_id') == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
+                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
                 @endforeach
             </select>
-            <select class="form-select" name="kode_surat_id" style="width: 150px;" title="Kode Surat">
+            <select id="filter-topik" class="form-select form-select-sm" style="width: 170px;">
+                <option value="">Semua Topik</option>
+                @foreach($topiks as $t)
+                    <option value="{{ $t->id }}">{{ $t->nama }}</option>
+                @endforeach
+            </select>
+            <select id="filter-kode-surat" class="form-select form-select-sm" style="width: 150px;">
                 <option value="">Semua Kode</option>
                 @foreach($kodeSurats as $k)
-                <option value="{{ $k->id }}" {{ request('kode_surat_id') == $k->id ? 'selected' : '' }}>{{ $k->kode }}</option>
+                    <option value="{{ $k->id }}">{{ $k->kode }}</option>
                 @endforeach
             </select>
-            <input type="date" class="form-control" name="tgl_awal" value="{{ request('tgl_awal') }}" title="Tanggal awal" style="width: 150px;">
-            <input type="date" class="form-control" name="tgl_akhir" value="{{ request('tgl_akhir') }}" title="Tanggal akhir" style="width: 150px;">
-            <button type="submit" class="btn btn-primary">Cari</button>
-            <a href="{{ route('surat-keluar.index') }}" class="btn btn-link link-secondary">Reset</a>
         </div>
-    </form>
+    </div>
     <div class="table-responsive">
-        <table class="table table-vcenter card-table">
+        <table class="table table-hover table-vcenter card-table" id="tabel-surat" data-endpoint="{{ url('/api/surat-keluar') }}">
             <thead>
                 <tr>
-                    <th>No. Surat</th>
-                    <th>Kode</th>
+                    <th>No. Surat / Kode</th>
                     <th>Tujuan</th>
                     <th>Perihal</th>
                     <th>Tgl Surat</th>
                     <th>Klasifikasi</th>
-                    <th class="w-1"></th>
+                    <th>Topik</th>
+                    <th class="text-end" style="width: 1%">Aksi</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($surat as $s)
-                <tr>
-                    <td>{{ $s->nomor_surat }}</td>
-                    <td>{{ $s->kodeSurat?->kode ?? '-' }}</td>
-                    <td>{{ $s->tujuan_surat }}</td>
-                    <td>{{ $s->perihal }}</td>
-                    <td>{{ $s->tanggal_surat->format('d/m/Y') }}</td>
-                    <td><x-badge-klasifikasi :klasifikasi="$s->klasifikasi" /></td>
-                    <td>
-                        <a href="{{ route('surat-keluar.show', $s->uuid) }}" class="btn btn-sm btn-secondary">Detail</a>
-                        <a href="{{ route('surat-keluar.edit', $s->uuid) }}" class="btn btn-sm btn-secondary">Edit</a>
-                        <form method="POST" action="{{ route('surat-keluar.destroy', $s->uuid) }}" class="d-inline" onsubmit="return confirm('Hapus surat keluar ini?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center text-muted">Belum ada surat keluar.</td>
-                </tr>
-                @endforelse
+            <tbody id="tabel-surat-body">
             </tbody>
         </table>
     </div>
-    @if($surat->hasPages())
     <div class="card-footer d-flex align-items-center">
-        <div class="text-muted">
-            Menampilkan <strong>{{ $surat->firstItem() }}</strong> sampai <strong>{{ $surat->lastItem() }}</strong> dari <strong>{{ $surat->total() }}</strong> data
-        </div>
-        {{ $surat->appends(request()->query())->links() }}
-        <div class="ms-3 d-flex align-items-center">
-            <label class="form-label mb-0 me-2" style="white-space:nowrap;">Per halaman</label>
-            <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">
-                <option value="{{ request()->fullUrlWithQuery(['per_page' => 25, 'page' => null]) }}" {{ request('per_page', 25) == 25 ? 'selected' : '' }}>25</option>
-                <option value="{{ request()->fullUrlWithQuery(['per_page' => 50, 'page' => null]) }}" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                <option value="{{ request()->fullUrlWithQuery(['per_page' => 100, 'page' => null]) }}" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-            </select>
-        </div>
+        <div id="tabel-surat-info" class="text-muted"></div>
+        <ul class="pagination ms-auto mb-0" id="tabel-surat-pagination"></ul>
     </div>
-    @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tabel = document.getElementById('tabel-surat');
+    if (tabel) {
+        new SuratTable(tabel.dataset.endpoint || '/api/surat-keluar', {
+            columns: ['nomor_surat', 'tujuan', 'perihal', 'tanggal', 'klasifikasi', 'topik', 'aksi'],
+            detailUrl: '/surat-keluar',
+            emptyTitle: 'Tidak ada surat keluar',
+            emptySubtitle: 'Belum ada data surat keluar yang ditemukan',
+        });
+    }
+});
+</script>
+@endpush
 @endsection

@@ -1,5 +1,9 @@
+import Alpine from 'alpinejs';
 import { tabler } from '@tabler/core';
 import 'chart.js/auto';
+
+window.Alpine = Alpine;
+Alpine.start();
 
 import './simpel/tracking-chart.js';
 import './simpel/disposisi-form.js';

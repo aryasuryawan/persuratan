@@ -125,13 +125,12 @@ class DocumentSearchService
             return $this->noAccess();
         }
 
-        $rows = SuratKeluar::where($this->keywordWhere(
+        $query = SuratKeluar::where($this->keywordWhere(
             ['nomor_surat', 'perihal', 'tujuan_surat'],
             $keyword
-        ))
-            ->latest('tanggal_surat')
-            ->limit($limit)
-            ->get();
+        ));
+
+        $rows = $query->latest('tanggal_surat')->limit($limit)->get();
 
         return $this->format($rows, fn (SuratKeluar $s) => $this->formatSuratKeluarRow($s));
     }
@@ -197,9 +196,9 @@ class DocumentSearchService
         }
 
         return $query->where(function ($q) use ($user) {
-            $q->whereHas('klasifikasi', fn ($kl) => $kl->where('kode', '!=', 'restricted'))
+            $q->whereHas('klasifikasi', fn ($kl) => $kl->where('kode', '!=', 'TERBATAS'))
               ->orWhere(function ($qr) use ($user) {
-                  $qr->whereHas('klasifikasi', fn ($kl) => $kl->where('kode', 'restricted'))
+                  $qr->whereHas('klasifikasi', fn ($kl) => $kl->where('kode', 'TERBATAS'))
                      ->where(function ($ra) use ($user) {
                          $ra->orWhereHas('disposisi', fn ($d) =>
                              $d->where('atas_nama_pimpinan_id', $user->id)

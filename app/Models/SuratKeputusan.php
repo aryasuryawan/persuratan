@@ -9,18 +9,20 @@ use App\Concerns\PunyaRiwayatArsip;
 use App\Models\Klasifikasi;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class SuratKeputusan extends Model
 {
-    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip;
+    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip, SoftDeletes;
 
     protected $table = 'surat_keputusan';
 
     protected $fillable = [
         'uuid', 'nomor_sk', 'perihal', 'kategori', 'klasifikasi_id', 'tanggal_sk',
         'tanggal_berlaku', 'ditetapkan_oleh', 'ringkasan', 'status',
-        'is_rahasia', 'dicatat_oleh_id',
+        'dicatat_oleh_id',
     ];
 
     protected function casts(): array
@@ -28,7 +30,6 @@ class SuratKeputusan extends Model
         return [
             'tanggal_sk' => 'date',
             'tanggal_berlaku' => 'date',
-            'is_rahasia' => 'boolean',
         ];
     }
 
@@ -54,6 +55,16 @@ class SuratKeputusan extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(Klasifikasi::class);
+    }
+
+    public function topiks(): MorphToMany
+    {
+        return $this->morphToMany(Topik::class, 'document', 'document_topik');
+    }
+
+    public function getIsRahasiaAttribute(): bool
+    {
+        return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
     }
 
     protected function labelsRiwayat(): array

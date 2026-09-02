@@ -85,6 +85,12 @@
                         <div class="datagrid-value">{!! $sk->ringkasan !!}</div>
                     </div>
                     @endif
+                    @if($sk->topiks->count() > 0)
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Topik</div>
+                        <div class="datagrid-value"><x-badge-topik :topiks="$sk->topiks" /></div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

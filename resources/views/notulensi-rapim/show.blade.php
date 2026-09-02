@@ -63,6 +63,12 @@
                         <div class="datagrid-value">{!! $rapim->keputusan_arahan !!}</div>
                     </div>
                     @endif
+                    @if($rapim->topiks->count() > 0)
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Topik</div>
+                        <div class="datagrid-value"><x-badge-topik :topiks="$rapim->topiks" /></div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

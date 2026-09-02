@@ -9,17 +9,19 @@ use App\Concerns\PunyaRiwayatArsip;
 use App\Models\Klasifikasi;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class NotulensiRapim extends Model
 {
-    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip;
+    use PunyaAksesManual, PunyaFotoKegiatan, PunyaLampiran, PunyaRiwayatArsip, SoftDeletes;
 
     protected $table = 'notulensi_rapim';
 
     protected $fillable = [
         'uuid', 'judul_rapat', 'tanggal', 'kategori', 'klasifikasi_id', 'daftar_peserta',
-        'ringkasan_pembahasan', 'keputusan_arahan', 'is_rahasia',
+        'ringkasan_pembahasan', 'keputusan_arahan',
         'dicatat_oleh_id',
     ];
 
@@ -27,7 +29,6 @@ class NotulensiRapim extends Model
     {
         return [
             'tanggal' => 'date',
-            'is_rahasia' => 'boolean',
         ];
     }
 
@@ -53,6 +54,16 @@ class NotulensiRapim extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(Klasifikasi::class);
+    }
+
+    public function topiks(): MorphToMany
+    {
+        return $this->morphToMany(Topik::class, 'document', 'document_topik');
+    }
+
+    public function getIsRahasiaAttribute(): bool
+    {
+        return in_array($this->klasifikasi?->kode, ['TERBATAS', 'RAHASIA']);
     }
 
     protected function labelsRiwayat(): array
