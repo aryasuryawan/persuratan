@@ -153,6 +153,11 @@ class SuratKeputusanController extends Controller
     public function restore(string $uuid)
     {
         $surat = SuratKeputusan::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($surat->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak memulihkan surat ini.');
+        }
+
         $surat->restore();
 
         return redirect()->route('surat-keputusan.show', $uuid)
@@ -162,6 +167,11 @@ class SuratKeputusanController extends Controller
     public function forceDelete(string $uuid)
     {
         $surat = SuratKeputusan::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($surat->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak menghapus permanen surat ini.');
+        }
+
         $media = app(ArsipMediaService::class);
         $media->hapusSemua($surat);
         $surat->forceDelete();

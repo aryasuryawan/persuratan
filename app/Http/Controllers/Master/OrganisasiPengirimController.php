@@ -75,6 +75,8 @@ class OrganisasiPengirimController extends Controller
 
     public function destroy(OrganisasiPengirim $organisasiPengirim)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         if ($organisasiPengirim->suratMasuk()->exists()) {
             return back()->with('error', 'Organisasi masih digunakan oleh surat masuk.');
         }

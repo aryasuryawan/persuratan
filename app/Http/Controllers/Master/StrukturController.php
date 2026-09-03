@@ -72,6 +72,8 @@ class StrukturController extends Controller
 
     public function destroy(Struktur $struktur)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         $struktur->delete();
 
         return redirect()->route('master.strukturs.index')

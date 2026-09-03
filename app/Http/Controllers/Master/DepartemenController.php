@@ -82,6 +82,8 @@ class DepartemenController extends Controller
 
     public function destroy(Departemen $departemen)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         $departemen->delete();
 
         return redirect()->route('master.departemens.index')

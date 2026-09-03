@@ -150,6 +150,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menonaktifkan user.');
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Tidak dapat menghapus akun sendiri.');
         }

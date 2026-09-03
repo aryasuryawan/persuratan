@@ -72,6 +72,8 @@ class DirektoratController extends Controller
 
     public function destroy(Direktorat $direktorat)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         if ($direktorat->divisis()->exists()) {
             return back()->with('error', 'Direktorat masih memiliki divisi.');
         }

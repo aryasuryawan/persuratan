@@ -67,6 +67,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         if ($role->users()->exists()) {
             return back()->with('error', 'Role masih memiliki user.');
         }

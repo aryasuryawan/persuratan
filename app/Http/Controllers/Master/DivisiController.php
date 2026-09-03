@@ -82,6 +82,8 @@ class DivisiController extends Controller
 
     public function destroy(Divisi $divisi)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         if ($divisi->departemens()->exists()) {
             return back()->with('error', 'Divisi masih memiliki departemen.');
         }

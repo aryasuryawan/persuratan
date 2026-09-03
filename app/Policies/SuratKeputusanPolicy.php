@@ -37,7 +37,7 @@ class SuratKeputusanPolicy
 
     public function delete(User $user, SuratKeputusan $suratKeputusan): bool
     {
-        return $user->hasPermission('surat-keputusan.delete');
+        return $user->isCreatorOrAdmin($suratKeputusan->dicatat_oleh_id);
     }
 
     public function assignAkses(User $user, SuratKeputusan $suratKeputusan): bool

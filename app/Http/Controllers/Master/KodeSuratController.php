@@ -74,6 +74,8 @@ class KodeSuratController extends Controller
 
     public function destroy(KodeSurat $kodeSurat)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         $kodeSurat->delete();
 
         return redirect()->route('master.kode-surats.index')

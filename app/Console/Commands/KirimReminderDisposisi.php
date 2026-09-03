@@ -38,10 +38,10 @@ class KirimReminderDisposisi extends Command
             ->with(['kepadaUser', 'suratMasuk'])
             ->get()
             ->filter(function ($disposisi) {
-                $surat = $disposisi->suratMasuk;
-                if ($surat->followUps()->exists()) {
+                if ($disposisi->followUps()->exists()) {
                     return false;
                 }
+                $surat = $disposisi->suratMasuk;
                 if ($surat->status && in_array($surat->status->kode, ['completed', 'finished'])) {
                     return false;
                 }

@@ -37,7 +37,7 @@ class KomitePersetujuanPolicy
 
     public function delete(User $user, KomitePersetujuan $komite): bool
     {
-        return $user->hasPermission('komite-persetujuan.delete');
+        return $user->isCreatorOrAdmin($komite->dicatat_oleh_id);
     }
 
     public function assignAkses(User $user, KomitePersetujuan $komite): bool

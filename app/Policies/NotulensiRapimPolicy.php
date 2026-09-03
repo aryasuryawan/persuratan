@@ -37,7 +37,7 @@ class NotulensiRapimPolicy
 
     public function delete(User $user, NotulensiRapim $rapim): bool
     {
-        return $user->hasPermission('notulensi-rapim.delete');
+        return $user->isCreatorOrAdmin($rapim->dicatat_oleh_id);
     }
 
     public function assignAkses(User $user, NotulensiRapim $rapim): bool

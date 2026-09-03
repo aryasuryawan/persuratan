@@ -56,6 +56,8 @@ class TopikController extends Controller
 
     public function destroy(Topik $topik)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         $topik->delete();
 
         return redirect()->route('master.topik.index')

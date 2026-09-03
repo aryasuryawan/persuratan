@@ -58,6 +58,8 @@ class SekretarisPimpinanController extends Controller
 
     public function destroy(SekretarisPimpinan $sekretarisPimpinan)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         $sekretarisPimpinan->delete();
 
         return redirect()->route('master.sekretaris-pimpinan.index')

@@ -58,6 +58,8 @@ class KlasifikasiController extends Controller
 
     public function destroy(Klasifikasi $klasifikasi)
     {
+        abort_unless(request()->user()->isAdmin(), 403, 'Hanya administrator yang dapat menghapus data master.');
+
         if ($klasifikasi->suratMasuk()->exists()) {
             return back()->with('error', 'Klasifikasi masih digunakan oleh surat.');
         }

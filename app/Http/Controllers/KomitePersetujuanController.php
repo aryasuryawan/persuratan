@@ -148,6 +148,11 @@ class KomitePersetujuanController extends Controller
     public function restore(string $uuid)
     {
         $komite = KomitePersetujuan::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($komite->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak memulihkan record ini.');
+        }
+
         $komite->restore();
 
         return redirect()->route('komite-persetujuan.show', $uuid)
@@ -157,6 +162,11 @@ class KomitePersetujuanController extends Controller
     public function forceDelete(string $uuid)
     {
         $komite = KomitePersetujuan::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($komite->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak menghapus permanen record ini.');
+        }
+
         $media = app(ArsipMediaService::class);
         $media->hapusSemua($komite);
         $komite->forceDelete();

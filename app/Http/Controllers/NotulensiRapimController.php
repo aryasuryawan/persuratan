@@ -148,6 +148,11 @@ class NotulensiRapimController extends Controller
     public function restore(string $uuid)
     {
         $rapim = NotulensiRapim::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($rapim->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak memulihkan record ini.');
+        }
+
         $rapim->restore();
 
         return redirect()->route('notulensi-rapim.show', $uuid)
@@ -157,6 +162,11 @@ class NotulensiRapimController extends Controller
     public function forceDelete(string $uuid)
     {
         $rapim = NotulensiRapim::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        if (! request()->user()->isCreatorOrAdmin($rapim->dicatat_oleh_id)) {
+            abort(403, 'Anda tidak berhak menghapus permanen record ini.');
+        }
+
         $media = app(ArsipMediaService::class);
         $media->hapusSemua($rapim);
         $rapim->forceDelete();
