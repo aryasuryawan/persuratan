@@ -35,6 +35,16 @@ class KomitePersetujuanController extends Controller
             });
         }
 
+        if ($dari = $request->get('periode_dari')) {
+            $query->whereDate('tanggal_rapat', '>=', $dari);
+        }
+        if ($sampai = $request->get('periode_sampai')) {
+            $query->whereDate('tanggal_rapat', '<=', $sampai);
+        }
+        if ($inputerId = $request->get('inputer_id')) {
+            $query->where('dicatat_oleh_id', $inputerId);
+        }
+
         $arsip = $query->latest('tanggal_rapat')->paginate($request->get('per_page', 25));
         $tahunList = KomitePersetujuan::query()
             ->pluck('tanggal_rapat')
@@ -43,8 +53,11 @@ class KomitePersetujuanController extends Controller
             ->unique()
             ->sortDesc()
             ->values();
+        $inputers = \App\Models\User::whereIn('id', KomitePersetujuan::query()->whereNotNull('dicatat_oleh_id')->distinct()->pluck('dicatat_oleh_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('komite-persetujuan.index', compact('arsip', 'tahunList'));
+        return view('komite-persetujuan.index', compact('arsip', 'tahunList', 'inputers'));
     }
 
     public function trash(Request $request)

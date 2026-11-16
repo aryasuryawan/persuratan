@@ -22,7 +22,7 @@ class SuratKeluarController extends Controller
         $user = Auth::user();
 
         if ($request->ajax()) {
-            $filters = $request->only(['search', 'klasifikasi_id', 'topik_id', 'kode_surat_id']);
+            $filters = $request->only(['search', 'klasifikasi_id', 'topik_id', 'kode_surat_id', 'periode_dari', 'periode_sampai', 'inputer_id']);
             $query = SuratKeluar::with(['klasifikasi', 'pembuat', 'kodeSurat', 'topiks']);
             $query = $scope->scopeSuratKeluarForUser($query, $user);
 
@@ -42,6 +42,15 @@ class SuratKeluarController extends Controller
             }
             if (!empty($filters['kode_surat_id'])) {
                 $query->where('kode_surat_id', $filters['kode_surat_id']);
+            }
+            if (!empty($filters['periode_dari'])) {
+                $query->whereDate('tanggal_surat', '>=', $filters['periode_dari']);
+            }
+            if (!empty($filters['periode_sampai'])) {
+                $query->whereDate('tanggal_surat', '<=', $filters['periode_sampai']);
+            }
+            if (!empty($filters['inputer_id'])) {
+                $query->where('created_by', $filters['inputer_id']);
             }
 
             $surat = $query->latest()->paginate($request->get('per_page', 25));
@@ -64,13 +73,16 @@ class SuratKeluarController extends Controller
         $klasifikasi = Klasifikasi::orderBy('nama')->get();
         $topiks = Topik::orderBy('nama')->get();
         $kodeSurats = \App\Models\KodeSurat::where('aktif', true)->get();
+        $inputers = \App\Models\User::whereIn('id', SuratKeluar::query()->whereNotNull('created_by')->distinct()->pluck('created_by'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         $baseQuery = SuratKeluar::query();
         $baseQuery = $scope->scopeSuratKeluarForUser($baseQuery, $user, true);
         $total = (clone $baseQuery)->count();
         $hariIni = (clone $baseQuery)->whereDate('created_at', today())->count();
 
-        return view('surat-keluar.index', compact('klasifikasi', 'topiks', 'kodeSurats', 'total', 'hariIni'));
+        return view('surat-keluar.index', compact('klasifikasi', 'topiks', 'kodeSurats', 'total', 'hariIni', 'inputers'));
     }
 
     public function create(AksesKlasifikasiService $akses)
@@ -274,6 +286,76 @@ class SuratKeluarController extends Controller
 
         return redirect()->route('surat-keluar.show', $uuid)
             ->with('success', 'Surat keluar berhasil diperbarui.');
+    }
+
+    public function export(Request $request, \App\Services\SuratScopeService $scope)
+    {
+        $this->authorize('viewAny', SuratKeluar::class);
+        $user = Auth::user();
+        $filters = $request->only(['search', 'klasifikasi_id', 'topik_id', 'kode_surat_id', 'periode_dari', 'periode_sampai', 'inputer_id']);
+
+        $query = SuratKeluar::with(['klasifikasi', 'pembuat', 'kodeSurat', 'topiks']);
+        $query = $scope->scopeSuratKeluarForUser($query, $user);
+
+        if (!empty($filters['search'])) {
+            $s = $filters['search'];
+            $query->where(function ($q) use ($s) {
+                $q->where('nomor_surat', 'like', "%{$s}%")
+                  ->orWhere('perihal', 'like', "%{$s}%")
+                  ->orWhere('tujuan_surat', 'like', "%{$s}%");
+            });
+        }
+        if (!empty($filters['klasifikasi_id'])) {
+            $query->where('klasifikasi_id', $filters['klasifikasi_id']);
+        }
+        if (!empty($filters['topik_id'])) {
+            $query->whereHas('topiks', fn($q) => $q->where('topik.id', $filters['topik_id']));
+        }
+        if (!empty($filters['kode_surat_id'])) {
+            $query->where('kode_surat_id', $filters['kode_surat_id']);
+        }
+        if (!empty($filters['periode_dari'])) {
+            $query->whereDate('tanggal_surat', '>=', $filters['periode_dari']);
+        }
+        if (!empty($filters['periode_sampai'])) {
+            $query->whereDate('tanggal_surat', '<=', $filters['periode_sampai']);
+        }
+        if (!empty($filters['inputer_id'])) {
+            $query->where('created_by', $filters['inputer_id']);
+        }
+
+        $query->latest('tanggal_surat');
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $headers = ['No. Surat', 'Kode Surat', 'Tujuan', 'Perihal', 'Tanggal Surat', 'Klasifikasi', 'Topik', 'Inputer'];
+        $sheet->fromArray($headers, null, 'A1');
+
+        $row = 2;
+        $query->chunk(200, function ($rows) use ($sheet, &$row) {
+            foreach ($rows as $s) {
+                $sheet->fromArray([
+                    $s->nomor_surat,
+                    $s->kodeSurat?->kode,
+                    $s->tujuan_surat,
+                    $s->perihal,
+                    optional($s->tanggal_surat)->format('d/m/Y'),
+                    $s->klasifikasi?->nama,
+                    $s->topiks->pluck('nama')->implode(', '),
+                    $s->pembuat?->name,
+                ], null, 'A' . $row);
+                $row++;
+            }
+        });
+
+        $filename = 'surat-keluar-' . now()->format('Ymd-His') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function trash(Request $request)

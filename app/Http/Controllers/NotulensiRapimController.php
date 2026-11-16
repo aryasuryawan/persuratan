@@ -35,6 +35,16 @@ class NotulensiRapimController extends Controller
             });
         }
 
+        if ($dari = $request->get('periode_dari')) {
+            $query->whereDate('tanggal', '>=', $dari);
+        }
+        if ($sampai = $request->get('periode_sampai')) {
+            $query->whereDate('tanggal', '<=', $sampai);
+        }
+        if ($inputerId = $request->get('inputer_id')) {
+            $query->where('dicatat_oleh_id', $inputerId);
+        }
+
         $arsip = $query->latest('tanggal')->paginate($request->get('per_page', 25));
         $tahunList = NotulensiRapim::query()
             ->pluck('tanggal')
@@ -43,8 +53,11 @@ class NotulensiRapimController extends Controller
             ->unique()
             ->sortDesc()
             ->values();
+        $inputers = \App\Models\User::whereIn('id', NotulensiRapim::query()->whereNotNull('dicatat_oleh_id')->distinct()->pluck('dicatat_oleh_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('notulensi-rapim.index', compact('arsip', 'tahunList'));
+        return view('notulensi-rapim.index', compact('arsip', 'tahunList', 'inputers'));
     }
 
     public function create()

@@ -45,6 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('penerimaan-surat')->name('penerimaan-surat.')->group(function () {
         Route::get('/', [PenerimaanSuratController::class, 'index'])->name('index');
+        Route::get('/export', [PenerimaanSuratController::class, 'export'])->name('export');
         Route::get('/trash/list', [PenerimaanSuratController::class, 'trash'])->name('trash');
         Route::get('/create', [PenerimaanSuratController::class, 'create'])->name('create');
         Route::post('/', [PenerimaanSuratController::class, 'store'])->name('store');
@@ -75,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
         Route::get('/', [SuratKeluarController::class, 'index'])->name('index');
+        Route::get('/export', [SuratKeluarController::class, 'export'])->name('export');
         Route::get('/trash/list', [SuratKeluarController::class, 'trash'])->name('trash');
         Route::get('/create', [SuratKeluarController::class, 'create'])->name('create');
         Route::post('/', [SuratKeluarController::class, 'store'])->name('store');

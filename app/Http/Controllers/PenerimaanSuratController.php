@@ -21,7 +21,7 @@ class PenerimaanSuratController extends Controller
         $user = Auth::user();
 
         if ($request->ajax()) {
-            $filters = $request->only(['search', 'status', 'klasifikasi_id', 'topik_id']);
+            $filters = $request->only(['search', 'status', 'klasifikasi_id', 'topik_id', 'periode_dari', 'periode_sampai', 'inputer_id']);
             $surat = $scope->listSuratMasuk($user, $filters);
 
             $data = $surat->through(fn($s) => [
@@ -44,6 +44,9 @@ class PenerimaanSuratController extends Controller
         $statuses = StatusSurat::orderBy('urutan')->get();
         $klasifikasi = Klasifikasi::orderBy('nama')->get();
         $topiks = Topik::orderBy('nama')->get();
+        $inputers = \App\Models\User::whereIn('id', SuratMasuk::query()->whereNotNull('created_by')->distinct()->pluck('created_by'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         $baseQuery = SuratMasuk::query();
         $baseQuery = $scope->scopeForUser($baseQuery, $user, true);
@@ -56,7 +59,7 @@ class PenerimaanSuratController extends Controller
             ->pluck('jumlah', 'kode');
         $hariIni = (clone $baseQuery)->whereDate('created_at', today())->count();
 
-        return view('penerimaan-surat.index', compact('statuses', 'total', 'perStatus', 'hariIni', 'klasifikasi', 'topiks'));
+        return view('penerimaan-surat.index', compact('statuses', 'total', 'perStatus', 'hariIni', 'klasifikasi', 'topiks', 'inputers'));
     }
 
     public function create(AksesKlasifikasiService $akses)
@@ -437,6 +440,50 @@ class PenerimaanSuratController extends Controller
         $surat->aksesManual()->where('user_id', $userId)->delete();
 
         return response()->json(['message' => 'Akses berhasil dicabut.']);
+    }
+
+    public function export(Request $request, SuratScopeService $scope)
+    {
+        $this->authorize('viewAny', SuratMasuk::class);
+        $user = Auth::user();
+        $filters = $request->only(['search', 'status', 'klasifikasi_id', 'topik_id', 'periode_dari', 'periode_sampai', 'inputer_id']);
+
+        $query = $scope->buildSuratMasukQuery($user, $filters);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $headers = ['No. Agenda', 'No. Surat', 'Pengirim', 'Organisasi Pengirim', 'Perihal', 'Tanggal Surat', 'Tanggal Diterima', 'Status', 'Klasifikasi', 'Topik', 'Inputer', 'Catatan'];
+        $sheet->fromArray($headers, null, 'A1');
+
+        $row = 2;
+        $query->chunk(200, function ($rows) use ($sheet, &$row) {
+            foreach ($rows as $s) {
+                $sheet->fromArray([
+                    $s->nomor_agenda,
+                    $s->nomor_surat,
+                    $s->pengirim,
+                    $s->organisasiPengirim?->nama,
+                    $s->perihal,
+                    optional($s->tanggal_surat)->format('d/m/Y'),
+                    optional($s->tanggal_diterima)->format('d/m/Y'),
+                    $s->status?->label,
+                    $s->klasifikasi?->nama,
+                    $s->topiks->pluck('nama')->implode(', '),
+                    $s->pembuat?->name,
+                    $s->notes,
+                ], null, 'A' . $row);
+                $row++;
+            }
+        });
+
+        $filename = 'surat-masuk-' . now()->format('Ymd-His') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function trash(Request $request)

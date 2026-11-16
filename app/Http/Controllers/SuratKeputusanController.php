@@ -35,6 +35,16 @@ class SuratKeputusanController extends Controller
             });
         }
 
+        if ($dari = $request->get('periode_dari')) {
+            $query->whereDate('tanggal_sk', '>=', $dari);
+        }
+        if ($sampai = $request->get('periode_sampai')) {
+            $query->whereDate('tanggal_sk', '<=', $sampai);
+        }
+        if ($inputerId = $request->get('inputer_id')) {
+            $query->where('dicatat_oleh_id', $inputerId);
+        }
+
         $arsip = $query->latest('tanggal_sk')->paginate($request->get('per_page', 25));
         $tahunList = SuratKeputusan::query()
             ->pluck('tanggal_sk')
@@ -43,8 +53,11 @@ class SuratKeputusanController extends Controller
             ->unique()
             ->sortDesc()
             ->values();
+        $inputers = \App\Models\User::whereIn('id', SuratKeputusan::query()->whereNotNull('dicatat_oleh_id')->distinct()->pluck('dicatat_oleh_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('surat-keputusan.index', compact('arsip', 'tahunList'));
+        return view('surat-keputusan.index', compact('arsip', 'tahunList', 'inputers'));
     }
 
     public function trash(Request $request)

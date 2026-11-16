@@ -7,7 +7,11 @@
             <div class="page-pretitle">SiMPEL</div>
             <h2 class="page-title">Surat Keluar</h2>
         </div>
-        <div class="col-auto ms-auto">
+        <div class="col-auto ms-auto d-flex gap-2">
+            <a href="{{ route('surat-keluar.export') }}" id="btn-export-surat" class="btn btn-outline-success">
+                <i class="ti ti-file-spreadsheet me-2"></i>
+                Export Excel
+            </a>
             @can('create', App\Models\SuratKeluar::class)
             <a href="{{ route('surat-keluar.create') }}" class="btn btn-primary">
                 <i class="ti ti-plus me-2"></i>
@@ -46,31 +50,50 @@
 <div class="card card-bordered table-card">
     <div class="card-header">
         <h3 class="card-title">Daftar Surat Keluar</h3>
-        <div class="card-actions d-flex gap-2 flex-wrap">
-            <div class="input-icon">
-                <input type="text" id="search-surat" class="form-control form-control-sm" placeholder="Cari nomor surat, tujuan, perihal...">
-                <span class="input-icon-addon">
-                    <i class="ti ti-search"></i>
-                </span>
+    </div>
+    <div class="card-body border-bottom py-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-4 col-lg-3">
+                <div class="input-icon">
+                    <input type="text" id="search-surat" class="form-control form-control-sm" placeholder="Cari nomor surat, tujuan, perihal...">
+                    <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                </div>
             </div>
-            <select id="filter-klasifikasi" class="form-select form-select-sm" style="width: 170px;">
-                <option value="">Semua Klasifikasi</option>
-                @foreach($klasifikasi as $k)
-                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
-                @endforeach
-            </select>
-            <select id="filter-topik" class="form-select form-select-sm" style="width: 170px;">
-                <option value="">Semua Topik</option>
-                @foreach($topiks as $t)
-                    <option value="{{ $t->id }}">{{ $t->nama }}</option>
-                @endforeach
-            </select>
-            <select id="filter-kode-surat" class="form-select form-select-sm" style="width: 150px;">
-                <option value="">Semua Kode</option>
-                @foreach($kodeSurats as $k)
-                    <option value="{{ $k->id }}">{{ $k->kode }}</option>
-                @endforeach
-            </select>
+            <div class="col-6 col-md-4 col-lg-2">
+                <select id="filter-klasifikasi" class="form-select form-select-sm">
+                    <option value="">Semua Klasifikasi</option>
+                    @foreach($klasifikasi as $k)
+                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <select id="filter-topik" class="form-select form-select-sm">
+                    <option value="">Semua Topik</option>
+                    @foreach($topiks as $t)
+                        <option value="{{ $t->id }}">{{ $t->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <select id="filter-kode-surat" class="form-select form-select-sm">
+                    <option value="">Semua Kode</option>
+                    @foreach($kodeSurats as $k)
+                        <option value="{{ $k->id }}">{{ $k->kode }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-auto">
+                <x-filter-periode />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <select id="filter-inputer" class="form-select form-select-sm">
+                    <option value="">Semua Inputer</option>
+                    @foreach($inputers as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
     <div class="table-responsive">
@@ -108,6 +131,27 @@ document.addEventListener('DOMContentLoaded', () => {
             emptySubtitle: 'Belum ada data surat keluar yang ditemukan',
         });
     }
+
+    const btnExport = document.getElementById('btn-export-surat');
+    btnExport?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const base = btnExport.getAttribute('href');
+        const params = new URLSearchParams();
+        const map = {
+            search: 'search-surat',
+            klasifikasi_id: 'filter-klasifikasi',
+            topik_id: 'filter-topik',
+            kode_surat_id: 'filter-kode-surat',
+            periode_dari: 'filter-periode-dari',
+            periode_sampai: 'filter-periode-sampai',
+            inputer_id: 'filter-inputer',
+        };
+        Object.entries(map).forEach(([key, id]) => {
+            const v = document.getElementById(id)?.value;
+            if (v) params.set(key, v);
+        });
+        window.location.href = base + (params.toString() ? ('?' + params.toString()) : '');
+    });
 });
 </script>
 @endpush

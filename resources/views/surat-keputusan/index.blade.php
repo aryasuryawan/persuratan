@@ -25,23 +25,39 @@
         </div>
 
         <div class="card">
-            <form method="GET" class="card-body">
-                <div class="filter-bar">
-                    <div class="input-icon flex-grow-1" style="min-width: 200px; max-width: 340px;">
-                        <input type="text" class="form-control" name="q" placeholder="Cari nomor SK, perihal, kategori..." value="{{ request('q') }}">
-                        <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+            <form method="GET" class="card-body border-bottom">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-4 col-lg-3">
+                        <div class="input-icon">
+                            <input type="text" class="form-control" name="q" placeholder="Cari nomor SK, perihal, kategori..." value="{{ request('q') }}">
+                            <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                        </div>
                     </div>
-                    <select class="form-select" name="tahun" style="width: 140px;" title="Tahun">
-                        <option value="">Semua Tahun</option>
-                        @foreach($tahunList as $tahun)
-                        <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="btn btn-primary">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-                        Cari
-                    </button>
-                    <a href="{{ route('surat-keputusan.index') }}" class="btn btn-ghost">Reset</a>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <select class="form-select" name="tahun" title="Tahun">
+                            <option value="">Semua Tahun</option>
+                            @foreach($tahunList as $tahun)
+                            <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-auto">
+                        <x-filter-periode />
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <select class="form-select" name="inputer_id">
+                            <option value="">Semua Inputer</option>
+                            @foreach($inputers ?? [] as $u)
+                            <option value="{{ $u->id }}" {{ request('inputer_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Cari</button>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{{ route('surat-keputusan.index') }}" class="btn btn-ghost">Reset</a>
+                    </div>
                 </div>
             </form>
             <div class="table-responsive">

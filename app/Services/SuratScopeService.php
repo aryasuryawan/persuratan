@@ -123,12 +123,11 @@ class SuratScopeService
         });
     }
 
-    public function listSuratMasuk(User $user, array $filters = [])
+    public function buildSuratMasukQuery(User $user, array $filters = []): Builder
     {
         $query = SuratMasuk::with(['klasifikasi', 'status', 'pembuat', 'organisasiPengirim', 'topiks']);
 
         $query = $this->scopeForUser($query, $user);
-
         $query = $this->scopeSuratRestricted($query, $user);
 
         if (!empty($filters['search'])) {
@@ -153,7 +152,22 @@ class SuratScopeService
             $query->whereHas('topiks', fn($q) => $q->where('topik.id', $filters['topik_id']));
         }
 
-        return $query->latest('tanggal_diterima')->paginate(request('per_page', 25));
+        if (!empty($filters['periode_dari'])) {
+            $query->whereDate('tanggal_diterima', '>=', $filters['periode_dari']);
+        }
+        if (!empty($filters['periode_sampai'])) {
+            $query->whereDate('tanggal_diterima', '<=', $filters['periode_sampai']);
+        }
+        if (!empty($filters['inputer_id'])) {
+            $query->where('created_by', $filters['inputer_id']);
+        }
+
+        return $query->latest('tanggal_diterima');
+    }
+
+    public function listSuratMasuk(User $user, array $filters = [])
+    {
+        return $this->buildSuratMasukQuery($user, $filters)->paginate(request('per_page', 25));
     }
 
     private function scopeSuratRestricted(Builder $query, User $user): Builder

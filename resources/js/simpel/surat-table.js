@@ -31,31 +31,22 @@ class SuratTable {
         const klasifikasiEl = document.getElementById('filter-klasifikasi');
         const topikEl = document.getElementById('filter-topik');
         const kodeSuratEl = document.getElementById('filter-kode-surat');
+        const periodeDariEl = document.getElementById('filter-periode-dari');
+        const periodeSampaiEl = document.getElementById('filter-periode-sampai');
+        const inputerEl = document.getElementById('filter-inputer');
 
         searchEl?.addEventListener('input', _.debounce(() => {
             this.page = 1;
             this.fetch();
         }, 300));
 
-        statusEl?.addEventListener('change', () => {
-            this.page = 1;
-            this.fetch();
-        });
-
-        klasifikasiEl?.addEventListener('change', () => {
-            this.page = 1;
-            this.fetch();
-        });
-
-        topikEl?.addEventListener('change', () => {
-            this.page = 1;
-            this.fetch();
-        });
-
-        kodeSuratEl?.addEventListener('change', () => {
-            this.page = 1;
-            this.fetch();
-        });
+        statusEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        klasifikasiEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        topikEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        kodeSuratEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        inputerEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        periodeDariEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
+        periodeSampaiEl?.addEventListener('change', () => { this.page = 1; this.fetch(); });
 
         this.fetch();
     }
@@ -80,6 +71,18 @@ class SuratTable {
         return document.getElementById('filter-kode-surat')?.value || '';
     }
 
+    getPeriodeDari() {
+        return document.getElementById('filter-periode-dari')?.value || '';
+    }
+
+    getPeriodeSampai() {
+        return document.getElementById('filter-periode-sampai')?.value || '';
+    }
+
+    getInputer() {
+        return document.getElementById('filter-inputer')?.value || '';
+    }
+
     async fetch() {
         const url = new URL(this.endpoint, window.location.origin);
         url.searchParams.set('page', this.page);
@@ -95,6 +98,13 @@ class SuratTable {
 
         const kodeSurat = this.getKodeSurat();
         if (kodeSurat) url.searchParams.set('kode_surat_id', kodeSurat);
+
+        const periodeDari = this.getPeriodeDari();
+        const periodeSampai = this.getPeriodeSampai();
+        const inputer = this.getInputer();
+        if (periodeDari) url.searchParams.set('periode_dari', periodeDari);
+        if (periodeSampai) url.searchParams.set('periode_sampai', periodeSampai);
+        if (inputer) url.searchParams.set('inputer_id', inputer);
 
         const res = await fetch(url, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
